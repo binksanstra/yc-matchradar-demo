@@ -4,38 +4,38 @@
 //
 // Deze endpoint gebruikt Claude met de web search tool om ECHTE MKB-bedrijven
 // in West-/Midden-Brabant te vinden die passen bij een ingevoerde KDD.
-
+ 
 import Anthropic from "@anthropic-ai/sdk";
-
+ 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Methode niet toegestaan. Gebruik POST." });
   }
-
+ 
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({
       error: "Configuratiefout: ANTHROPIC_API_KEY ontbreekt. Voeg deze toe in Vercel → Settings → Environment Variables."
     });
   }
-
+ 
   const k = req.body || {};
-
+ 
   if (!k.naam || !k.voorkeur || !k.niveau) {
     return res.status(400).json({
       error: "Vul minimaal naam, opleidingsniveau en voorkeurssector in voor de kandidaat."
     });
   }
-
+ 
   const aantal = Math.max(3, Math.min(10, parseInt(k.aantal, 10) || 5));
   const vestiging = k.regio === "tilburg" ? "Tilburg"
                   : k.regio === "breda" ? "Breda"
                   : "Breda/Tilburg";
-
+ 
   const prompt = `Je bent een sales-strateeg voor YoungCapital ${vestiging}, een uitzend- en werving & selectiebureau gespecialiseerd in young professionals (MBO-WO starters). YoungCapital Breda en Tilburg bedienen lokale MKB-bedrijven in West-Brabant en Midden-Brabant.
-
+ 
 JE TAAK
 Vind ${aantal} ECHTE MKB-bedrijven in West-/Midden-Brabant met passende openstaande vacatures voor de kandidaat hieronder. Gebruik de web_search tool actief om actuele bedrijfs- en vacature-informatie te vinden.
-
+ 
 KANDIDAAT (KDD)
 - Voornaam: ${k.naam}
 - Niveau: ${k.niveau}
@@ -45,7 +45,7 @@ KANDIDAAT (KDD)
 - Werkervaring: ${k.ervaring}
 - Regio-voorkeur: ${k.regio || "geen specifieke voorkeur, heel West-/Midden-Brabant"}
 - Profiel/sterktes: ${k.sterk || "(niet ingevuld)"}
-
+ 
 WERKWIJZE
 1. Doe 4-6 web searches om bedrijven en vacatures in deze regio en sector te identificeren. Bijvoorbeeld:
    - vacatures van type X in Breda OF Tilburg OF West-Brabant
@@ -54,10 +54,10 @@ WERKWIJZE
 2. Filter op MKB (25-250 medewerkers); geen multinationals, geen ZZP'ers, geen fictieve bedrijven.
 3. Per geselecteerd bedrijf: zoek 1-2 recente bedrijfsontwikkelingen die als haakje kunnen dienen voor outreach (groei, nieuwe contracten, uitbreiding, lancering, etc.).
 4. Sorteer de top matches op score; hoogste eerst.
-
+ 
 OUTPUT
 Geef ALLEEN geldige JSON terug, GEEN markdown, GEEN uitleg eromheen, GEEN \`\`\` codeblokken.
-
+ 
 Format:
 {
   "topMatches": [
@@ -90,29 +90,36 @@ Format:
   ],
   "samenvatting": "Eén zin: hoeveel bedrijven gevonden, hoeveel acute vacatures, regio-spreiding."
 }
-
+ 
 BELANGRIJK
 - Alle teksten in het Nederlands.
 - Bedrijven MOETEN echt bestaan en in West-/Midden-Brabant gevestigd zijn.
 - Verzin geen vacatures die je niet hebt gevonden; als je geen exacte vacature hebt gevonden, vermeld dan een algemene rol die past bij het bedrijf en zet urgentie op 'laag'.
-- Wees realistisch en zakelijk in de outreach — geen overdreven taal, geen marketing-fluff.`;
-
+- Wees realistisch en zakelijk in de outreach — geen overdreven taal, geen marketing-fluff.
+ 
+OUTPUT-DISCIPLINE — UITERST BELANGRIJK
+- Je eerste karakter MOET een { zijn.
+- Je laatste karakter MOET een } zijn.
+- Geen tekst vóór de {. Geen tekst na de }. Geen \`\`\`json. Geen markdown. Geen uitleg.
+- Geen trailing comma's.
+- Als je twijfelt over een veld, gebruik dan een lege string "" of lege array [].`;
+ 
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
+ 
     const message = await client.messages.create({
       model: "claude-sonnet-4-5",
-      max_tokens: 6000,
+      max_tokens: 8000,
       tools: [
         {
           type: "web_search_20250305",
           name: "web_search",
-          max_uses: 5
+          max_uses: 4
         }
       ],
       messages: [{ role: "user", content: prompt }]
     });
-
+ 
     // Verzamel alle tekstcontent uit het antwoord
     let textContent = "";
     if (Array.isArray(message.content)) {
@@ -122,31 +129,40 @@ BELANGRIJK
         }
       }
     }
-
+ 
     if (!textContent.trim()) {
       return res.status(502).json({
         error: "Leeg antwoord van Claude. Probeer het opnieuw."
       });
     }
-
-    // Probeer JSON-blok te isoleren
+ 
+    // Probeer JSON-blok te isoleren — robuuster
     let jsonString = textContent.trim();
+ 
+    // Verwijder eventuele markdown-codeblokken: ```json ... ``` of ``` ... ```
+    jsonString = jsonString.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
+ 
+    // Pak het grootste {...}-blok
     const firstBrace = jsonString.indexOf("{");
     const lastBrace = jsonString.lastIndexOf("}");
     if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
       jsonString = jsonString.slice(firstBrace, lastBrace + 1);
     }
-
+ 
+    // Verwijder trailing commas (komen voor in LLM JSON-output)
+    jsonString = jsonString.replace(/,(\s*[}\]])/g, "$1");
+ 
     let parsed;
     try {
       parsed = JSON.parse(jsonString);
     } catch (parseErr) {
+      // Stuur een korte sample mee zodat we kunnen zien wat Claude deed
+      const sample = textContent.slice(0, 600).replace(/\s+/g, " ");
       return res.status(502).json({
-        error: "Kon het antwoord van Claude niet als JSON lezen. Probeer het opnieuw.",
-        ruwAntwoord: textContent.slice(0, 500)
+        error: "Kon Claude's antwoord niet als JSON lezen. Probeer het opnieuw, of pas de zoekopdracht aan. (Antwoord begon met: " + sample + "...)"
       });
     }
-
+ 
     return res.status(200).json({
       ok: true,
       kandidaat: { naam: k.naam, niveau: k.niveau, voorkeur: k.voorkeur, regio: k.regio || "" },
@@ -158,7 +174,7 @@ BELANGRIJK
     console.error("Anthropic API error:", error);
     const status = error.status || error.statusCode || 500;
     let userMessage = "API-aanroep mislukt: " + (error.message || "onbekende fout");
-
+ 
     if (status === 401) {
       userMessage = "API-key ongeldig. Controleer de ANTHROPIC_API_KEY in Vercel → Settings → Environment Variables.";
     } else if (status === 429) {
@@ -166,7 +182,8 @@ BELANGRIJK
     } else if (status >= 500) {
       userMessage = "Anthropic-server tijdelijk niet bereikbaar. Probeer over een minuut opnieuw.";
     }
-
+ 
     return res.status(status).json({ error: userMessage });
   }
 }
+ 

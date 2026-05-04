@@ -34,7 +34,9 @@ export default async function handler(req, res) {
   const prompt = `Je bent een sales-strateeg voor YoungCapital ${vestiging}, een uitzend- en werving & selectiebureau gespecialiseerd in young professionals (MBO-WO starters). YoungCapital Breda en Tilburg bedienen lokale MKB-bedrijven in West-Brabant en Midden-Brabant.
  
 JE TAAK
-Vind ${aantal} ECHTE MKB-bedrijven in West-/Midden-Brabant met passende openstaande vacatures voor de kandidaat hieronder. Gebruik de web_search tool actief om actuele bedrijfs- en vacature-informatie te vinden.
+Identificeer ${aantal} ECHTE MKB-bedrijven in West-/Midden-Brabant die passen bij de kandidaat hieronder. Combineer twee kennisbronnen:
+1. **Web search** (2-4 zoekopdrachten) om recente vacatures, bedrijfsnieuws of groeisignalen te vinden
+2. **Je eigen training-kennis** over bekende MKB-bedrijven in West-Brabant en Midden-Brabant
  
 KANDIDAAT (KDD)
 - Voornaam: ${k.naam}
@@ -47,13 +49,14 @@ KANDIDAAT (KDD)
 - Profiel/sterktes: ${k.sterk || "(niet ingevuld)"}
  
 WERKWIJZE
-1. Doe 4-6 web searches om bedrijven en vacatures in deze regio en sector te identificeren. Bijvoorbeeld:
-   - vacatures van type X in Breda OF Tilburg OF West-Brabant
-   - LinkedIn-bedrijfspagina's of Indeed-vacatures voor specifieke sectoren
-   - bedrijfsnieuws over groei/contracten/uitbreiding
-2. Filter op MKB (25-250 medewerkers); geen multinationals, geen ZZP'ers, geen fictieve bedrijven.
-3. Per geselecteerd bedrijf: zoek 1-2 recente bedrijfsontwikkelingen die als haakje kunnen dienen voor outreach (groei, nieuwe contracten, uitbreiding, lancering, etc.).
-4. Sorteer de top matches op score; hoogste eerst.
+1. Doe 2-4 gerichte web searches om bedrijven en sectorinfo in deze regio te vinden (bijv. "MKB ${k.voorkeur} Breda Tilburg", "${k.voorkeur} bedrijven West-Brabant vacatures", "${k.voorkeur} vacature ${k.niveau}").
+2. Combineer met je kennis van bestaande, bekende MKB-bedrijven in deze regio en sector. Echte voorbeelden uit West-/Midden-Brabant zijn er genoeg — denk aan namen die je kent van bedrijfslijsten, KvK, branche-organisaties.
+3. Selecteer ${aantal} bedrijven die echt bestaan en in West-/Midden-Brabant gevestigd zijn (Breda, Tilburg, Etten-Leur, Oosterhout, Roosendaal, Bergen op Zoom, Waalwijk, Oisterwijk, Goirle, Moerdijk e.d.).
+4. Per bedrijf: formuleer 1-2 plausibele openstaande vacatures op basis van wat zo'n bedrijf typisch zoekt, en 1-2 recente bedrijfsontwikkelingen op basis van wat je weet of hebt gevonden. Wees realistisch — geen fantasie, wel pragmatische inschatting.
+5. Sorteer de matches op score; hoogste eerst.
+ 
+PRINCIPE
+Voor de outreach-content geldt: een plausibele, realistische inschatting is waardevoller dan een lege output. Wees transparant in de bron-vermelding (bijv. "op basis van branchekennis" of "volgens recente LinkedIn-post" naar gelang).
  
 OUTPUT
 Geef ALLEEN geldige JSON terug, GEEN markdown, GEEN uitleg eromheen, GEEN \`\`\` codeblokken.
@@ -94,15 +97,18 @@ Format:
 BELANGRIJK
 - Alle teksten in het Nederlands.
 - Bedrijven MOETEN echt bestaan en in West-/Midden-Brabant gevestigd zijn.
-- Verzin geen vacatures die je niet hebt gevonden; als je geen exacte vacature hebt gevonden, vermeld dan een algemene rol die past bij het bedrijf en zet urgentie op 'laag'.
-- Wees realistisch en zakelijk in de outreach — geen overdreven taal, geen marketing-fluff.
+- Vacatures: gebruik concrete info indien gevonden, anders een plausibele rol die past bij het bedrijfstype + niveau van de kandidaat. Zet urgentie op 'midden' of 'laag' als je het niet zeker weet.
+- Recent nieuws: gebruik wat je hebt gevonden, of een plausibele observatie over de sector/regio met bron-aanduiding "branchekennis" of "sectortrend".
+- Wees realistisch en zakelijk in de outreach — geen overdreven taal.
  
 OUTPUT-DISCIPLINE — UITERST BELANGRIJK
+- LEVER ALTIJD JSON, ook als de zoekresultaten niet ideaal zijn. NOOIT excuses of uitleg in plaats van JSON.
 - Je eerste karakter MOET een { zijn.
 - Je laatste karakter MOET een } zijn.
-- Geen tekst vóór de {. Geen tekst na de }. Geen \`\`\`json. Geen markdown. Geen uitleg.
+- Geen tekst vóór de {. Geen tekst na de }. Geen \`\`\`json. Geen markdown. Geen verontschuldigingen.
 - Geen trailing comma's.
-- Als je twijfelt over een veld, gebruik dan een lege string "" of lege array [].`;
+- Als je twijfelt over een veld, gebruik dan een lege string "" of lege array [], maar lever altijd het complete object.
+- Lever minimaal ${aantal} bedrijven; vul aan met je training-kennis als web search te weinig oplevert.`;
  
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });

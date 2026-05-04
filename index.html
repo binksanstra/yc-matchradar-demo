@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>YC MatchRadar — YoungCapital Breda/Tilburg</title>
-  <meta name="description" content="Sales-tool voor YoungCapital Breda en Tilburg: kandidaatgedreven matching met lokale MKB-bedrijven in West-Brabant." />
+  <meta name="description" content="Kandidaatgedreven sales-tool voor YoungCapital Breda en Tilburg: scant MKB-bedrijven in West-Brabant op openstaande vacatures en recente ontwikkelingen, en genereert gepersonaliseerde outreach." />
   <style>
     :root {
       --yc-orange: #ff6600;
@@ -22,464 +22,256 @@
       --amber-bg: #fffbeb;
       --red: #dc2626;
       --red-bg: #fef2f2;
+      --blue: #2563eb;
+      --blue-bg: #eff6ff;
       --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
       --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05);
     }
-
     * { box-sizing: border-box; }
-
     html, body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        "Helvetica Neue", Arial, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-      line-height: 1.5;
-      font-size: 15px;
+      margin: 0; padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text); background: var(--bg);
+      line-height: 1.5; font-size: 15px;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
-
-    /* HEADER */
     header.app-header {
       background: linear-gradient(135deg, var(--yc-orange) 0%, var(--yc-orange-dark) 100%);
-      color: white;
-      padding: 22px 24px;
-      box-shadow: var(--shadow);
+      color: white; padding: 22px 24px; box-shadow: var(--shadow);
     }
-
-    .header-inner {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
+    .header-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 16px; }
     .logo {
-      width: 52px;
-      height: 52px;
-      background: white;
-      color: var(--yc-orange);
+      width: 52px; height: 52px;
+      background: white; color: var(--yc-orange);
       border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 22px;
-      letter-spacing: -1px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 22px; letter-spacing: -1px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-
-    h1 {
-      margin: 0;
-      font-size: 22px;
-      letter-spacing: -0.4px;
-      font-weight: 700;
-    }
-
-    header.app-header p {
-      margin: 2px 0 0;
-      font-size: 13px;
-      opacity: 0.95;
-    }
-
+    h1 { margin: 0; font-size: 22px; letter-spacing: -0.4px; font-weight: 700; }
+    header.app-header p { margin: 2px 0 0; font-size: 13px; opacity: 0.95; }
     .badge {
       margin-left: auto;
       background: rgba(255,255,255,0.2);
       border: 1px solid rgba(255,255,255,0.3);
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
+      padding: 4px 10px; border-radius: 999px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
     }
-
-    /* MAIN LAYOUT */
-    main {
-      max-width: 1100px;
-      margin: 24px auto;
-      padding: 0 16px 60px;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-      align-items: center;
-    }
-
-    .toolbar-label {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 500;
-      margin-right: 4px;
-    }
-
+    main { max-width: 1100px; margin: 24px auto; padding: 0 16px 60px; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+    .toolbar-label { font-size: 13px; color: var(--muted); font-weight: 500; margin-right: 4px; }
     .chip {
-      background: white;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
+      background: white; border: 1px solid var(--border); color: var(--text);
+      padding: 6px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
       transition: all 0.15s;
     }
-
-    .chip:hover {
-      border-color: var(--yc-orange);
-      color: var(--yc-orange);
-    }
-
-    .chip.danger:hover {
-      border-color: var(--red);
-      color: var(--red);
-    }
-
-    /* FORM GRID */
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    @media (max-width: 760px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-
+    .chip:hover { border-color: var(--yc-orange); color: var(--yc-orange); }
+    .chip.danger:hover { border-color: var(--red); color: var(--red); }
     .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 22px;
-      box-shadow: var(--shadow);
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 22px;
+      box-shadow: var(--shadow); margin-bottom: 16px;
     }
-
-    .card h2 {
-      margin: 0 0 4px;
-      font-size: 16px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
+    .card h2 { margin: 0 0 4px; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
     .card-icon {
-      display: inline-flex;
-      width: 26px;
-      height: 26px;
-      background: var(--yc-orange-light);
-      color: var(--yc-orange);
+      display: inline-flex; width: 26px; height: 26px;
+      background: var(--yc-orange-light); color: var(--yc-orange);
       border-radius: 7px;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 700;
+      align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700;
     }
-
-    .card-sub {
-      font-size: 13px;
-      color: var(--muted);
-      margin: 0 0 18px;
+    .card-sub { font-size: 13px; color: var(--muted); margin: 0 0 18px; }
+    .field { margin-bottom: 14px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    @media (max-width: 700px) {
+      .field-row, .field-row-3 { grid-template-columns: 1fr; }
     }
-
-    .field {
-      margin-bottom: 14px;
-    }
-
-    .field-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 5px;
-    }
-
+    label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
     label .req { color: var(--yc-orange); }
-
     input[type="text"], select, textarea {
-      width: 100%;
-      padding: 9px 11px;
-      border: 1px solid var(--border-strong);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: inherit;
-      background: white;
-      color: var(--text);
+      width: 100%; padding: 9px 11px;
+      border: 1px solid var(--border-strong); border-radius: 8px;
+      font-size: 14px; font-family: inherit;
+      background: white; color: var(--text);
       transition: border-color 0.15s, box-shadow 0.15s;
     }
-
-    input[type="text"]:focus,
-    select:focus,
-    textarea:focus {
+    input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: var(--yc-orange);
       box-shadow: 0 0 0 3px rgba(255,102,0,0.12);
     }
-
-    textarea {
-      min-height: 70px;
-      resize: vertical;
-      line-height: 1.5;
-    }
-
+    textarea { min-height: 70px; resize: vertical; line-height: 1.5; }
     select {
-      cursor: pointer;
-      appearance: none;
+      cursor: pointer; appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
+      background-repeat: no-repeat; background-position: right 12px center;
       padding-right: 32px;
     }
-
-    /* PRIMARY ACTION */
-    .primary-action {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
-      align-items: center;
-    }
-
+    .primary-action { display: flex; gap: 10px; margin-bottom: 24px; align-items: center; }
     button.primary {
-      background: var(--yc-orange);
-      color: white;
-      border: none;
-      padding: 13px 28px;
-      font-size: 15px;
-      font-weight: 600;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.15s;
-      flex: 1;
+      background: var(--yc-orange); color: white; border: none;
+      padding: 14px 28px; font-size: 15px; font-weight: 600;
+      border-radius: 10px; cursor: pointer;
+      transition: all 0.15s; flex: 1;
       box-shadow: 0 4px 12px rgba(255,102,0,0.25);
     }
-
     button.primary:hover:not(:disabled) {
       background: var(--yc-orange-dark);
       box-shadow: 0 6px 16px rgba(255,102,0,0.35);
       transform: translateY(-1px);
     }
-
-    button.primary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    /* ERROR */
+    button.primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
     .error-box {
-      background: var(--red-bg);
-      border: 1px solid #fecaca;
-      color: var(--red);
-      padding: 12px 16px;
-      border-radius: 10px;
-      margin-bottom: 16px;
-      font-size: 13px;
+      background: var(--red-bg); border: 1px solid #fecaca; color: var(--red);
+      padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 13px;
     }
-
-    /* LOADING */
-    #loading {
-      text-align: center;
-      padding: 40px 20px;
-      background: white;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      margin-bottom: 16px;
+    .info-banner {
+      background: var(--yc-orange-light); border: 1px solid #ffd9b8; color: var(--yc-orange-dark);
+      padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; font-size: 12px;
     }
-
+    #loading { text-align: center; padding: 50px 20px; background: white; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 16px; }
     .spinner {
-      display: inline-block;
-      width: 36px;
-      height: 36px;
-      border: 3px solid var(--yc-orange-light);
-      border-top-color: var(--yc-orange);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      display: inline-block; width: 40px; height: 40px;
+      border: 3px solid var(--yc-orange-light); border-top-color: var(--yc-orange);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-msg { margin: 16px 0 0; color: var(--muted); font-size: 14px; font-weight: 500; min-height: 22px; }
 
-    #loading-msg {
-      margin: 14px 0 0;
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 500;
-      min-height: 22px;
-    }
-
-    /* RESULTS */
-    .results-grid {
-      display: grid;
-      gap: 16px;
-    }
-
-    /* SCORE CARD */
-    .score-card {
+    .results-header {
       background: linear-gradient(135deg, #fff 0%, var(--yc-orange-light) 100%);
-      border: 1px solid #ffd9b8;
+      border: 1px solid #ffd9b8; border-radius: 14px;
+      padding: 22px; margin-bottom: 16px;
     }
-
-    .score-row {
-      display: flex;
-      align-items: center;
-      gap: 24px;
+    .results-header h2 { margin: 0 0 4px; font-size: 18px; }
+    .results-header p { margin: 0; color: var(--muted); font-size: 14px; }
+    .results-stats {
+      display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap;
     }
+    .stat-item {
+      flex: 1; min-width: 180px;
+      background: white; border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px;
+    }
+    .stat-num { font-size: 22px; font-weight: 800; color: var(--yc-orange); line-height: 1; }
+    .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+    .kandidaat-recap { margin-top: 12px; padding: 10px 14px; background: white; border-radius: 10px; font-size: 13px; border: 1px solid var(--border); }
+    .kandidaat-recap strong { color: var(--yc-orange-dark); }
 
-    .score-circle {
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      background: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 16px rgba(255,102,0,0.15);
-      border: 4px solid var(--yc-orange);
+    .bedrijf-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; margin-bottom: 12px; overflow: hidden;
+      box-shadow: var(--shadow); transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .bedrijf-card:hover { border-color: #ffd9b8; }
+    .bedrijf-card.expanded { box-shadow: var(--shadow-lg); border-color: #ffd9b8; }
+    .bedrijf-header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 20px; cursor: pointer; user-select: none;
+    }
+    .rank-badge {
+      width: 28px; height: 28px;
+      background: var(--yc-orange-light); color: var(--yc-orange);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 13px; flex-shrink: 0;
+    }
+    .score-mini {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: white; border: 3px solid var(--yc-orange);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(255,102,0,0.15);
     }
-
-    .score-number {
-      font-size: 36px;
-      font-weight: 800;
-      color: var(--yc-orange);
-      line-height: 1;
-      letter-spacing: -1px;
+    .score-mini .num { font-size: 18px; font-weight: 800; color: var(--yc-orange); line-height: 1; }
+    .score-mini .out { font-size: 9px; color: var(--muted); font-weight: 600; }
+    .bedrijf-info { flex: 1; min-width: 0; }
+    .bedrijf-info h3 { margin: 0 0 3px; font-size: 16px; font-weight: 700; }
+    .bedrijf-info p { margin: 0; font-size: 13px; color: var(--muted); }
+    .urgency-tag {
+      display: inline-block; margin-left: 6px; padding: 2px 6px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; vertical-align: middle; letter-spacing: 0.3px;
     }
-
-    .score-out-of {
-      font-size: 11px;
-      color: var(--muted);
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      margin-top: 2px;
-    }
-
-    .score-detail h3 {
-      margin: 0 0 4px;
-      font-size: 18px;
-    }
+    .urgency-urgent { background: var(--red-bg); color: var(--red); }
+    .urgency-hoog   { background: var(--amber-bg); color: var(--amber); }
+    .urgency-midden { background: var(--blue-bg); color: var(--blue); }
+    .urgency-laag   { background: #f3f4f6; color: var(--muted); }
 
     .score-label {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-      margin-bottom: 8px;
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.3px; flex-shrink: 0;
     }
-
     .score-label.high { background: var(--green-bg); color: var(--green); }
     .score-label.med  { background: var(--amber-bg); color: var(--amber); }
     .score-label.low  { background: var(--red-bg); color: var(--red); }
-
-    .score-detail p {
-      margin: 0;
-      font-size: 14px;
-      color: var(--muted);
+    .chevron { color: var(--muted); font-size: 14px; transition: transform 0.2s; flex-shrink: 0; }
+    .bedrijf-card.expanded .chevron { transform: rotate(180deg); }
+    .bedrijf-details { display: none; padding: 0 20px 20px; border-top: 1px solid var(--border); }
+    .bedrijf-card.expanded .bedrijf-details { display: block; }
+    .output-block { margin-top: 18px; }
+    .output-block h4 {
+      margin: 0 0 8px; font-size: 12px; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;
     }
-
-    /* OUTPUT BLOCKS */
-    .output-card h2 {
-      margin-bottom: 12px;
-    }
-
     .output-text {
-      background: #fafafa;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 14px;
-      line-height: 1.65;
-      white-space: pre-wrap;
-      word-wrap: break-word;
+      background: #fafafa; border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px;
+      font-size: 13.5px; line-height: 1.6;
+      white-space: pre-wrap; word-wrap: break-word;
     }
-
-    .output-mail {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    .output-text.vervolg { background: var(--yc-orange-light); border-color: #ffd9b8; font-weight: 500; }
+    .vacature-list, .nieuws-list { list-style: none; padding: 0; margin: 0; }
+    .vacature-item, .nieuws-item {
+      background: #fafafa; border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 6px;
+      font-size: 13.5px;
     }
-
+    .vacature-item .vac-titel { font-weight: 600; }
+    .vacature-item .vac-meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .nieuws-item { display: flex; gap: 10px; align-items: flex-start; }
+    .nieuws-icon {
+      flex-shrink: 0; width: 24px; height: 24px;
+      background: var(--blue-bg); color: var(--blue);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+    }
+    .nieuws-icon.groei { background: var(--green-bg); color: var(--green); }
+    .nieuws-icon.investering { background: var(--blue-bg); color: var(--blue); }
+    .nieuws-icon.product { background: #fef3c7; color: #d97706; }
+    .nieuws-icon.event { background: #f3e8ff; color: #7c3aed; }
     .copy-btn {
-      background: white;
-      color: var(--yc-orange);
-      border: 1px solid var(--yc-orange);
-      padding: 6px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      border-radius: 7px;
-      cursor: pointer;
-      margin-top: 10px;
+      background: white; color: var(--yc-orange); border: 1px solid var(--yc-orange);
+      padding: 5px 11px; font-size: 11px; font-weight: 600;
+      border-radius: 7px; cursor: pointer; margin-top: 8px;
       transition: all 0.15s;
     }
-
-    .copy-btn:hover {
-      background: var(--yc-orange);
-      color: white;
-    }
-
-    .copy-btn.copied {
-      background: var(--green);
-      color: white;
-      border-color: var(--green);
-    }
-
-    .vervolgstap-card {
-      background: var(--yc-orange-light);
-      border: 1px solid #ffd9b8;
-    }
-
-    .vervolgstap-card .output-text {
-      background: white;
-      border-color: #ffd9b8;
-      font-weight: 500;
-    }
-
-    /* FOOTER */
+    .copy-btn:hover { background: var(--yc-orange); color: white; }
+    .copy-btn.copied { background: var(--green); color: white; border-color: var(--green); }
     footer {
-      max-width: 1100px;
-      margin: 40px auto 0;
-      padding: 24px 16px;
-      text-align: center;
-      font-size: 12px;
-      color: var(--muted);
+      max-width: 1100px; margin: 40px auto 0;
+      padding: 24px 16px; text-align: center;
+      font-size: 12px; color: var(--muted);
       border-top: 1px solid var(--border);
     }
-
-    footer a { color: var(--muted); text-decoration: underline; }
-
     .hidden { display: none !important; }
-
-    /* PRINT */
     @media print {
-      header.app-header, .toolbar, .grid, .primary-action, footer { display: none !important; }
+      header.app-header, .toolbar, form, .primary-action, footer { display: none !important; }
       body { background: white; }
-      .card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+      .card, .bedrijf-card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+      .bedrijf-details { display: block !important; }
+      .chevron { display: none; }
       main { margin: 0; padding: 0; }
     }
-
-    /* SMALL SCREENS */
     @media (max-width: 480px) {
       h1 { font-size: 18px; }
       .logo { width: 44px; height: 44px; font-size: 18px; }
       .badge { display: none; }
-      .score-row { flex-direction: column; text-align: center; gap: 12px; }
-      .score-circle { width: 90px; height: 90px; }
-      .score-number { font-size: 30px; }
-      .field-row { grid-template-columns: 1fr; }
+      .bedrijf-header { flex-wrap: wrap; gap: 10px; }
+      .score-label { order: 99; }
     }
   </style>
 </head>
@@ -489,80 +281,81 @@
       <div class="logo">YC</div>
       <div>
         <h1>YC MatchRadar</h1>
-        <p>Sales-tool voor YoungCapital Breda &amp; Tilburg — West-Brabant MKB</p>
+        <p>Kandidaatgedreven sales-tool voor YoungCapital Breda &amp; Tilburg</p>
       </div>
       <span class="badge">Prototype</span>
     </div>
   </header>
 
   <main>
+    <div class="info-banner">
+      <strong>Workflow:</strong> vul de KDD in → de tool scant 30+ MKB-bedrijven in West-/Midden-Brabant op openstaande vacatures &amp; recente ontwikkelingen → je krijgt een ranglijst van bedrijven waar de kandidaat het snelst aan de slag kan, mét gepersonaliseerde outreach.
+    </div>
+
     <div class="toolbar">
-      <span class="toolbar-label">Voorbeelden:</span>
-      <button class="chip" data-example="logistiek">Logistiek MBO &rarr; Tilburg</button>
-      <button class="chip" data-example="marketing">HBO Marketing &rarr; Breda</button>
-      <button class="chip" data-example="zorg">HBO Zorg &rarr; Roosendaal</button>
+      <span class="toolbar-label">Voorbeeld-kandidaten:</span>
+      <button class="chip" data-example="logistiek">Tom · MBO Logistiek</button>
+      <button class="chip" data-example="marketing">Sanne · HBO Marketing</button>
+      <button class="chip" data-example="zorg">Lisa · HBO Verpleegkunde</button>
+      <button class="chip" data-example="it">Daan · WO Informatica</button>
       <button class="chip danger" id="resetBtn">Wis formulier</button>
     </div>
 
     <div id="errorBox" class="error-box hidden"></div>
 
     <form id="matchForm">
-      <div class="grid">
-        <!-- KANDIDAATPROFIEL -->
-        <section class="card">
-          <h2><span class="card-icon">1</span>Kandidaatprofiel</h2>
-          <p class="card-sub">Wie heb je beschikbaar voor plaatsing?</p>
+      <section class="card">
+        <h2><span class="card-icon">K</span>Kandidaatprofiel (KDD)</h2>
+        <p class="card-sub">Wie heb je in beeld voor plaatsing?</p>
 
-          <div class="field-row">
-            <div class="field">
-              <label for="k_naam">Voornaam <span class="req">*</span></label>
-              <input type="text" id="k_naam" placeholder="Bijv. Sanne" />
-            </div>
-            <div class="field">
-              <label for="k_niveau">Opleidingsniveau <span class="req">*</span></label>
-              <select id="k_niveau">
-                <option value="MBO">MBO</option>
-                <option value="HBO" selected>HBO</option>
-                <option value="WO">WO</option>
-              </select>
-            </div>
-          </div>
-
+        <div class="field-row-3">
           <div class="field">
-            <label for="k_studie">Opleiding / studierichting</label>
-            <input type="text" id="k_studie" placeholder="Bijv. Commerciële Economie" />
+            <label for="k_naam">Voornaam <span class="req">*</span></label>
+            <input type="text" id="k_naam" placeholder="Bijv. Sanne" />
           </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="k_voorkeur">Voorkeurssector</label>
-              <select id="k_voorkeur">
-                <option value="breed">Breed inzetbaar</option>
-                <option value="logistiek">Logistiek &amp; Magazijn</option>
-                <option value="horeca">Horeca</option>
-                <option value="retail">Retail</option>
-                <option value="productie">Productie / Maakindustrie</option>
-                <option value="callcenter">Callcenter / Klantenservice</option>
-                <option value="zakelijk">Zakelijke dienstverlening</option>
-                <option value="it">IT &amp; Tech</option>
-                <option value="marketing">Marketing &amp; Sales</option>
-                <option value="bouw">Bouw</option>
-                <option value="zorg">Zorg &amp; Welzijn</option>
-                <option value="finance">Finance / Accounting</option>
-                <option value="techniek">Techniek</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="k_uren">Beschikbaarheid</label>
-              <select id="k_uren">
-                <option value="parttime-klein">Parttime (8-20u)</option>
-                <option value="parttime" selected>Parttime (20-32u)</option>
-                <option value="fulltime">Fulltime / starter (32-40u)</option>
-                <option value="flex">Flexibel / op afroep</option>
-              </select>
-            </div>
+          <div class="field">
+            <label for="k_niveau">Opleidingsniveau <span class="req">*</span></label>
+            <select id="k_niveau">
+              <option value="MBO">MBO</option>
+              <option value="HBO" selected>HBO</option>
+              <option value="WO">WO</option>
+            </select>
           </div>
+          <div class="field">
+            <label for="k_uren">Beschikbaarheid</label>
+            <select id="k_uren">
+              <option value="parttime-klein">Parttime (8-20u)</option>
+              <option value="parttime" selected>Parttime (20-32u)</option>
+              <option value="fulltime">Fulltime / starter (32-40u)</option>
+              <option value="flex">Flexibel / op afroep</option>
+            </select>
+          </div>
+        </div>
 
+        <div class="field">
+          <label for="k_studie">Opleiding / studierichting</label>
+          <input type="text" id="k_studie" placeholder="Bijv. Commerciële Economie" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="k_voorkeur">Voorkeurssector <span class="req">*</span></label>
+            <select id="k_voorkeur">
+              <option value="breed">Breed inzetbaar</option>
+              <option value="logistiek">Logistiek &amp; Magazijn</option>
+              <option value="horeca">Horeca</option>
+              <option value="retail">Retail</option>
+              <option value="productie">Productie / Maakindustrie</option>
+              <option value="callcenter">Callcenter / Klantenservice</option>
+              <option value="zakelijk">Zakelijke dienstverlening</option>
+              <option value="it">IT &amp; Tech</option>
+              <option value="marketing">Marketing &amp; Sales</option>
+              <option value="bouw">Bouw</option>
+              <option value="zorg">Zorg &amp; Welzijn</option>
+              <option value="finance">Finance / Accounting</option>
+              <option value="techniek">Techniek</option>
+            </select>
+          </div>
           <div class="field">
             <label for="k_ervaring">Werkervaring</label>
             <select id="k_ervaring">
@@ -571,158 +364,90 @@
               <option value="veel">Ruime ervaring (relevante stages/banen)</option>
             </select>
           </div>
+        </div>
 
+        <div class="field-row">
           <div class="field">
-            <label for="k_sterk">Sterktes / korte pitch (optioneel)</label>
-            <textarea id="k_sterk" placeholder="Bijv. communicatief sterk, leergierig, zoekt commerciële omgeving"></textarea>
+            <label for="k_regio">Regio-voorkeur (optioneel)</label>
+            <select id="k_regio">
+              <option value="">Geen voorkeur — heel West-/Midden-Brabant</option>
+              <option value="breda">Voorkeur: Breda &amp; West-Brabant</option>
+              <option value="tilburg">Voorkeur: Tilburg &amp; Midden-Brabant</option>
+            </select>
           </div>
-        </section>
-
-        <!-- BEDRIJFSPROFIEL -->
-        <section class="card">
-          <h2><span class="card-icon">2</span>Bedrijfsprofiel</h2>
-          <p class="card-sub">Welk MKB-bedrijf wil je benaderen?</p>
-
           <div class="field">
-            <label for="b_naam">Bedrijfsnaam <span class="req">*</span></label>
-            <input type="text" id="b_naam" placeholder="Bijv. De Brabantse Logistiek B.V." />
+            <label for="k_aantal">Aantal matches tonen</label>
+            <select id="k_aantal">
+              <option value="3">Top 3</option>
+              <option value="5" selected>Top 5</option>
+              <option value="10">Top 10</option>
+            </select>
           </div>
+        </div>
 
-          <div class="field-row">
-            <div class="field">
-              <label for="b_sector">Sector <span class="req">*</span></label>
-              <select id="b_sector">
-                <option value="logistiek">Logistiek &amp; Magazijn</option>
-                <option value="horeca">Horeca</option>
-                <option value="retail">Retail</option>
-                <option value="productie">Productie / Maakindustrie</option>
-                <option value="callcenter">Callcenter / Klantenservice</option>
-                <option value="zakelijk">Zakelijke dienstverlening</option>
-                <option value="it">IT &amp; Tech</option>
-                <option value="marketing" selected>Marketing &amp; Sales</option>
-                <option value="bouw">Bouw</option>
-                <option value="zorg">Zorg &amp; Welzijn</option>
-                <option value="finance">Finance / Accounting</option>
-                <option value="techniek">Techniek</option>
-                <option value="anders">Anders</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="b_locatie">Locatie</label>
-              <input type="text" id="b_locatie" placeholder="Bijv. Tilburg" />
-            </div>
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="b_omvang">Bedrijfsgrootte</label>
-              <select id="b_omvang">
-                <option value="klein">Klein (1-25 medewerkers)</option>
-                <option value="mkb" selected>MKB (25-100 medewerkers)</option>
-                <option value="middelgroot">Middelgroot (100-250 medewerkers)</option>
-                <option value="groot">Groot (250-500 medewerkers)</option>
-                <option value="corporate">Corporate (500+ medewerkers)</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="b_functie">Type vacature / functie</label>
-              <input type="text" id="b_functie" placeholder="Bijv. Junior accountmanager" />
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="b_extra">Extra context (optioneel)</label>
-            <textarea id="b_extra" placeholder="Bijv. groeit hard, opent nieuwe vestiging, heeft veel openstaande vacatures"></textarea>
-          </div>
-        </section>
-      </div>
+        <div class="field">
+          <label for="k_sterk">Sterktes / korte pitch (optioneel)</label>
+          <textarea id="k_sterk" placeholder="Bijv. communicatief sterk, leergierig, zoekt commerciële omgeving"></textarea>
+        </div>
+      </section>
 
       <div class="primary-action">
-        <button type="submit" class="primary" id="submitBtn">
-          Genereer match
-        </button>
+        <button type="submit" class="primary" id="submitBtn">Vind passende bedrijven</button>
       </div>
     </form>
 
-    <!-- LOADING -->
     <div id="loading" class="hidden">
       <div class="spinner"></div>
-      <p id="loading-msg">Profielen analyseren...</p>
+      <p id="loading-msg">Kandidaatprofiel analyseren...</p>
     </div>
 
-    <!-- RESULTS -->
     <section id="results" class="hidden">
-      <div class="results-grid">
-        <!-- SCORE -->
-        <div class="card score-card">
-          <h2><span class="card-icon">3</span>Matchscore</h2>
-          <p class="card-sub" id="score-context">Resultaat voor <span id="r-bedrijf"></span></p>
-          <div class="score-row">
-            <div class="score-circle">
-              <div class="score-number" id="r-score">8.5</div>
-              <div class="score-out-of">/ 10</div>
-            </div>
-            <div class="score-detail">
-              <h3 id="r-label">Sterke match</h3>
-              <span class="score-label high" id="r-label-tag">HOGE PRIORITEIT</span>
-              <p id="r-summary"></p>
-            </div>
+      <div class="results-header">
+        <h2 id="r-title">Top bedrijven voor <span id="r-naam"></span></h2>
+        <p>Gerangschikt op snelheid-tot-plaatsing: combineert vacature-urgentie, sectorfit, locatie en groeisignalen.</p>
+        <div class="results-stats">
+          <div class="stat-item">
+            <div class="stat-num" id="r-stat-bedrijven">–</div>
+            <div class="stat-label">Bedrijven met passende vacatures</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num" id="r-stat-vacatures">–</div>
+            <div class="stat-label">Openstaande vacatures gevonden</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num" id="r-stat-urgent">–</div>
+            <div class="stat-label">Acute / urgente vacatures</div>
           </div>
         </div>
-
-        <!-- ONDERBOUWING -->
-        <div class="card output-card">
-          <h2><span class="card-icon">4</span>Onderbouwing</h2>
-          <div class="output-text" id="r-onderbouwing"></div>
-        </div>
-
-        <!-- BELOPENING -->
-        <div class="card output-card">
-          <h2><span class="card-icon">5</span>Persoonlijke belopening</h2>
-          <p class="card-sub">Voor een eerste koud telefoongesprek met de beslisser.</p>
-          <div class="output-text" id="r-belopening"></div>
-          <button type="button" class="copy-btn" data-copy="r-belopening">Kopieer naar klembord</button>
-        </div>
-
-        <!-- MAIL -->
-        <div class="card output-card">
-          <h2><span class="card-icon">6</span>Outreach-mail</h2>
-          <p class="card-sub">Klaar om te kopiëren en te versturen.</p>
-          <div class="output-text output-mail" id="r-mail"></div>
-          <button type="button" class="copy-btn" data-copy="r-mail">Kopieer naar klembord</button>
-        </div>
-
-        <!-- VERVOLGSTAP -->
-        <div class="card vervolgstap-card output-card">
-          <h2><span class="card-icon">7</span>Aanbevolen vervolgstap</h2>
-          <div class="output-text" id="r-vervolgstap"></div>
-        </div>
+        <div class="kandidaat-recap" id="r-recap"></div>
       </div>
+
+      <div id="r-bedrijven"></div>
 
       <div class="primary-action" style="margin-top: 20px;">
         <button type="button" class="primary" id="newBtn">Nieuwe analyse</button>
-        <button type="button" class="chip" onclick="window.print()" style="padding: 10px 18px;">Print / opslaan als PDF</button>
+        <button type="button" class="chip" onclick="window.print()" style="padding: 11px 18px;">Print / opslaan als PDF</button>
       </div>
     </section>
   </main>
 
   <footer>
     <p>YC MatchRadar — prototype voor afstudeeronderzoek YoungCapital Breda/Tilburg.<br />
-       Frontend-only demo. De matchscore en outputs worden berekend op basis van een gewogen scoringsmodel met sector-, locatie- en kandidaatfit-criteria.</p>
+       Frontend-only demo. De bedrijfsdatabase bevat 30+ representatieve, fictieve MKB-bedrijven met openstaande vacatures en recente ontwikkelingen, ter illustratie van een productieflow waarin deze data live van bronnen als LinkedIn / vacaturesites / nieuwsfeeds zou komen.</p>
   </footer>
 
   <script>
     // ======================================================================
-    // YC MATCHRADAR — Frontend-only matching engine
+    // YC MATCHRADAR — Kandidaatgedreven matching engine v2
     //
-    // Het scoringmodel hieronder berekent een matchscore (0-10) op basis van
-    // 6 weegfactoren: sectorpotentieel voor YC, locatie binnen West-Brabant,
-    // bedrijfsomvang, kandidaat-sectorvoorkeur, niveau-fit en beschikbaarheid.
-    // De outputs (onderbouwing, belopening, mail, vervolgstap) worden
-    // gegenereerd uit dynamische templates die de input personaliseren.
+    // Scant een database van MKB-bedrijven in West-/Midden-Brabant en zoekt
+    // bedrijven met openstaande vacatures die passen bij de KDD. De score
+    // wordt opgebouwd uit 8 weegfactoren waarvan vacature-urgentie de
+    // belangrijkste is — want dat bepaalt hoe snel de kandidaat aan de slag
+    // kan. Recente bedrijfsontwikkelingen worden gebruikt als ijsbreker in
+    // de gepersonaliseerde outreach (mail + belopening).
     // ======================================================================
 
-    // --- DATA: sector-eigenschappen voor YoungCapital portfolio ---
     const SECTOREN = {
       logistiek:   { label: "Logistiek & Magazijn",         ycPotentieel: 9.5, niveau: ["MBO", "HBO"], type: "operationeel" },
       horeca:      { label: "Horeca",                       ycPotentieel: 8.5, niveau: ["MBO", "HBO"], type: "operationeel" },
@@ -739,144 +464,310 @@
       anders:      { label: "Overig",                       ycPotentieel: 6.0, niveau: ["MBO", "HBO", "WO"], type: "overig" }
     };
 
-    // --- DATA: locatiescore voor West-Brabant focus ---
     const LOCATIES = {
       "breda":          { score: 10, regio: "Breda", vestiging: "Breda" },
       "tilburg":        { score: 10, regio: "Tilburg", vestiging: "Tilburg" },
       "etten-leur":     { score: 9,  regio: "West-Brabant", vestiging: "Breda" },
-      "etten leur":     { score: 9,  regio: "West-Brabant", vestiging: "Breda" },
       "oosterhout":     { score: 9,  regio: "West-Brabant", vestiging: "Breda" },
       "roosendaal":     { score: 9,  regio: "West-Brabant", vestiging: "Breda" },
       "bergen op zoom": { score: 9,  regio: "West-Brabant", vestiging: "Breda" },
       "moerdijk":       { score: 8,  regio: "West-Brabant", vestiging: "Breda" },
-      "zundert":        { score: 8,  regio: "West-Brabant", vestiging: "Breda" },
-      "rucphen":        { score: 8,  regio: "West-Brabant", vestiging: "Breda" },
-      "halderberge":    { score: 8,  regio: "West-Brabant", vestiging: "Breda" },
-      "geertruidenberg":{ score: 8,  regio: "West-Brabant", vestiging: "Breda" },
-      "drimmelen":      { score: 8,  regio: "West-Brabant", vestiging: "Breda" },
       "waalwijk":       { score: 8,  regio: "Midden-Brabant", vestiging: "Tilburg" },
       "oisterwijk":     { score: 8,  regio: "Midden-Brabant", vestiging: "Tilburg" },
-      "goirle":         { score: 8,  regio: "Midden-Brabant", vestiging: "Tilburg" },
-      "loon op zand":   { score: 8,  regio: "Midden-Brabant", vestiging: "Tilburg" },
-      "kaatsheuvel":    { score: 8,  regio: "Midden-Brabant", vestiging: "Tilburg" },
-      "hilvarenbeek":   { score: 7,  regio: "Midden-Brabant", vestiging: "Tilburg" },
-      "dongen":         { score: 8,  regio: "Midden-Brabant", vestiging: "Tilburg" },
-      "gilze":          { score: 8,  regio: "Midden-Brabant", vestiging: "Tilburg" },
-      "rijen":          { score: 8,  regio: "Midden-Brabant", vestiging: "Tilburg" },
-      "den bosch":      { score: 4,  regio: "Noord-Brabant", vestiging: "Breda" },
-      "'s-hertogenbosch":{score: 4,  regio: "Noord-Brabant", vestiging: "Breda" },
-      "eindhoven":      { score: 3,  regio: "Noord-Brabant", vestiging: "Breda" },
-      "helmond":        { score: 3,  regio: "Noord-Brabant", vestiging: "Breda" }
+      "goirle":         { score: 8,  regio: "Midden-Brabant", vestiging: "Tilburg" }
     };
 
-    const OMVANG_SCORE = {
-      "klein":       6,
-      "mkb":         10,
-      "middelgroot": 9,
-      "groot":       7,
-      "corporate":   5
-    };
+    const OMVANG_SCORE  = { "klein": 6, "mkb": 10, "middelgroot": 9, "groot": 7, "corporate": 5 };
+    const OMVANG_KORT   = { "klein": "Klein", "mkb": "MKB", "middelgroot": "Middelgroot", "groot": "Groot", "corporate": "Corporate" };
+    const UREN_LABEL    = { "parttime-klein": "parttime (8-20 uur)", "parttime": "parttime (20-32 uur)", "fulltime": "fulltime / starter (32-40 uur)", "flex": "flexibele inzet" };
+    const ERVARING_LABEL= { "weinig": "eerste werkervaring", "wat": "een tot twee jaar relevante bijbaan-/stage-ervaring", "veel": "ruime relevante werk- en stage-ervaring" };
 
-    const OMVANG_LABEL = {
-      "klein":       "klein bedrijf (1-25 medewerkers)",
-      "mkb":         "MKB-bedrijf (25-100 medewerkers)",
-      "middelgroot": "middelgroot bedrijf (100-250 medewerkers)",
-      "groot":       "groot bedrijf (250-500 medewerkers)",
-      "corporate":   "corporate (500+ medewerkers)"
-    };
+    // Vacature-urgentie scores
+    const URGENTIE_SCORE = { "urgent": 25, "hoog": 20, "midden": 14, "laag": 8 };
+    const URGENTIE_LABEL = { "urgent": "URGENT", "hoog": "Hoge urgentie", "midden": "Midden urgentie", "laag": "Lage urgentie" };
 
-    const UREN_LABEL = {
-      "parttime-klein": "parttime (8-20 uur)",
-      "parttime":       "parttime (20-32 uur)",
-      "fulltime":       "fulltime / starter (32-40 uur)",
-      "flex":           "flexibele inzet"
-    };
+    // Nieuws-typen → impact op match
+    const NIEUWS_TYPE_BOOST = { "groei": 5, "investering": 4, "product": 3, "event": 2, "leiding": 3 };
+    const NIEUWS_ICON = { "groei": "↗", "investering": "€", "product": "★", "event": "◆", "leiding": "◉" };
 
-    const ERVARING_LABEL = {
-      "weinig": "eerste werkervaring",
-      "wat":    "een tot twee jaar relevante bijbaan-/stage-ervaring",
-      "veel":   "ruime relevante werk- en stage-ervaring"
-    };
+    // ======================================================================
+    // BEDRIJVEN-DATABASE met vacatures en recent nieuws
+    // ======================================================================
+    const BEDRIJVEN_DATABASE = [
+      // LOGISTIEK
+      { naam: "Brabant Logistics Group", sector: "logistiek", locatie: "Tilburg", omvang: "mkb",
+        vacatures: [
+          { titel: "Magazijnmedewerker / orderpicker", niveau: "MBO", urgentie: "urgent", sinds: "5 dagen", aantal: 4 },
+          { titel: "Logistiek planner", niveau: "HBO", urgentie: "midden", sinds: "3 weken", aantal: 1 }
+        ],
+        nieuws: [
+          { tekst: "kondigde aan in Q3 een nieuw distributiecentrum te openen in de regio", type: "groei" },
+          { tekst: "tekende onlangs een 5-jarig contract met een grote retailer", type: "investering" }
+        ] },
+      { naam: "West-Port Distribution", sector: "logistiek", locatie: "Moerdijk", omvang: "middelgroot",
+        vacatures: [{ titel: "Heftruckchauffeur (3-ploegen)", niveau: "MBO", urgentie: "hoog", sinds: "2 weken", aantal: 3 }],
+        nieuws: [{ tekst: "investeert dit jaar fors in automatisering van het magazijn", type: "investering" }] },
+      { naam: "Etten Logistics Center", sector: "logistiek", locatie: "Etten-Leur", omvang: "mkb",
+        vacatures: [
+          { titel: "Magazijnmedewerker e-commerce", niveau: "MBO", urgentie: "hoog", sinds: "1 week", aantal: 5 },
+          { titel: "Picker (ochtenddienst)", niveau: "MBO", urgentie: "urgent", sinds: "3 dagen", aantal: 2 }
+        ],
+        nieuws: [{ tekst: "groeit met 30% door toename online bestellingen", type: "groei" }] },
+      { naam: "Breda Warehouse Solutions", sector: "logistiek", locatie: "Breda", omvang: "klein",
+        vacatures: [{ titel: "Warehouse-coördinator", niveau: "MBO", urgentie: "midden", sinds: "1 maand", aantal: 1 }],
+        nieuws: [{ tekst: "richt zich sinds dit jaar op high-end kledingdistributie", type: "product" }] },
+
+      // PRODUCTIE
+      { naam: "WestPro Industrie B.V.", sector: "productie", locatie: "Breda", omvang: "mkb",
+        vacatures: [
+          { titel: "Productiemedewerker (ploegendienst)", niveau: "MBO", urgentie: "hoog", sinds: "2 weken", aantal: 3 },
+          { titel: "Junior werkvoorbereider", niveau: "HBO", urgentie: "midden", sinds: "1 maand", aantal: 1 }
+        ],
+        nieuws: [{ tekst: "won een meerjarig contract voor componenten-assemblage", type: "investering" }] },
+      { naam: "Tilburg Metaaltechniek", sector: "productie", locatie: "Tilburg", omvang: "mkb",
+        vacatures: [{ titel: "Lasser / metaalbewerker", niveau: "MBO", urgentie: "urgent", sinds: "4 dagen", aantal: 2 }],
+        nieuws: [{ tekst: "opende vorige maand een tweede productiehal", type: "groei" }] },
+      { naam: "Brabantse Voeding B.V.", sector: "productie", locatie: "Oosterhout", omvang: "middelgroot",
+        vacatures: [{ titel: "Productiemedewerker voedingsmiddelen", niveau: "MBO", urgentie: "hoog", sinds: "1 week", aantal: 4 }],
+        nieuws: [{ tekst: "lanceert dit kwartaal een nieuwe productlijn voor de horeca", type: "product" }] },
+      { naam: "Roosendaal Plastics", sector: "productie", locatie: "Roosendaal", omvang: "mkb",
+        vacatures: [{ titel: "Machine-operator (3-ploegen)", niveau: "MBO", urgentie: "midden", sinds: "3 weken", aantal: 2 }],
+        nieuws: [{ tekst: "investeert in duurzame, recyclebare materialen", type: "groei" }] },
+
+      // RETAIL
+      { naam: "Brabant Retail Group", sector: "retail", locatie: "Breda", omvang: "middelgroot",
+        vacatures: [
+          { titel: "Verkoopmedewerker (parttime)", niveau: "MBO", urgentie: "hoog", sinds: "1 week", aantal: 6 },
+          { titel: "Assistent-filiaalmanager", niveau: "HBO", urgentie: "midden", sinds: "3 weken", aantal: 2 }
+        ],
+        nieuws: [{ tekst: "opent dit najaar 3 nieuwe filialen in Noord-Brabant", type: "groei" }] },
+      { naam: "Mode West-Brabant", sector: "retail", locatie: "Tilburg", omvang: "mkb",
+        vacatures: [{ titel: "Verkoopmedewerker mode (parttime)", niveau: "MBO", urgentie: "hoog", sinds: "10 dagen", aantal: 3 }],
+        nieuws: [{ tekst: "lanceerde recent een eigen webshop", type: "product" }] },
+      { naam: "Tuincentrum De Brabander", sector: "retail", locatie: "Etten-Leur", omvang: "klein",
+        vacatures: [{ titel: "Winkel- en kassamedewerker (zaterdag)", niveau: "MBO", urgentie: "midden", sinds: "2 weken", aantal: 2 }],
+        nieuws: [{ tekst: "verwacht door het seizoen een drukke voorjaarsmaand", type: "event" }] },
+
+      // HORECA
+      { naam: "Brasserie Breda Centrum", sector: "horeca", locatie: "Breda", omvang: "klein",
+        vacatures: [
+          { titel: "Bediening (weekend)", niveau: "MBO", urgentie: "urgent", sinds: "5 dagen", aantal: 3 },
+          { titel: "Allround horecamedewerker", niveau: "MBO", urgentie: "hoog", sinds: "2 weken", aantal: 1 }
+        ],
+        nieuws: [{ tekst: "verlengde recent het seizoen-terras tot november", type: "event" }] },
+      { naam: "Hotel Mercato Tilburg", sector: "horeca", locatie: "Tilburg", omvang: "mkb",
+        vacatures: [
+          { titel: "Receptionist", niveau: "MBO", urgentie: "hoog", sinds: "1 week", aantal: 1 },
+          { titel: "Banquetmedewerker", niveau: "MBO", urgentie: "midden", sinds: "3 weken", aantal: 2 }
+        ],
+        nieuws: [{ tekst: "boekt fors meer zakelijke gasten en breidt het personeelsbestand uit", type: "groei" }] },
+      { naam: "Catering Plus West", sector: "horeca", locatie: "Roosendaal", omvang: "klein",
+        vacatures: [{ titel: "Cateringmedewerker", niveau: "MBO", urgentie: "midden", sinds: "2 weken", aantal: 2 }],
+        nieuws: [{ tekst: "won onlangs een groot evenement-contract", type: "investering" }] },
+
+      // CALLCENTER
+      { naam: "Connect Customer Care", sector: "callcenter", locatie: "Tilburg", omvang: "middelgroot",
+        vacatures: [
+          { titel: "Klantenservice-medewerker", niveau: "HBO", urgentie: "hoog", sinds: "1 week", aantal: 4 },
+          { titel: "Junior teamlead", niveau: "HBO", urgentie: "midden", sinds: "1 maand", aantal: 1 }
+        ],
+        nieuws: [{ tekst: "haalde een nieuwe energie-leverancier binnen als klant", type: "investering" }] },
+      { naam: "ServiceLine Brabant", sector: "callcenter", locatie: "Breda", omvang: "mkb",
+        vacatures: [{ titel: "Callcenter-agent (B2C)", niveau: "MBO", urgentie: "urgent", sinds: "4 dagen", aantal: 5 }],
+        nieuws: [{ tekst: "opent in Q3 een tweede vestiging in Eindhoven", type: "groei" }] },
+
+      // ZAKELIJKE DIENSTVERLENING
+      { naam: "Adviesbureau Brabant", sector: "zakelijk", locatie: "Breda", omvang: "klein",
+        vacatures: [{ titel: "Junior consultant", niveau: "HBO", urgentie: "midden", sinds: "3 weken", aantal: 1 }],
+        nieuws: [{ tekst: "begeleidt momenteel meerdere MKB-bedrijven met HR-vraagstukken", type: "groei" }] },
+      { naam: "Consultancy Group Tilburg", sector: "zakelijk", locatie: "Tilburg", omvang: "mkb",
+        vacatures: [{ titel: "Junior adviseur procesoptimalisatie", niveau: "HBO", urgentie: "hoog", sinds: "1 week", aantal: 2 }],
+        nieuws: [{ tekst: "tekende een meerjarig advieschap voor een grote producent", type: "investering" }] },
+      { naam: "Notariaat West-Brabant", sector: "zakelijk", locatie: "Bergen op Zoom", omvang: "klein",
+        vacatures: [{ titel: "Junior notarieel medewerker", niveau: "HBO", urgentie: "midden", sinds: "2 weken", aantal: 1 }],
+        nieuws: [{ tekst: "ziet door drukke vastgoedmarkt veel familiezaken voorbij komen", type: "event" }] },
+
+      // IT
+      { naam: "Brabant Tech Solutions", sector: "it", locatie: "Breda", omvang: "mkb",
+        vacatures: [
+          { titel: "Junior front-end developer", niveau: "HBO", urgentie: "hoog", sinds: "10 dagen", aantal: 2 },
+          { titel: "IT-supportmedewerker", niveau: "MBO", urgentie: "urgent", sinds: "3 dagen", aantal: 1 }
+        ],
+        nieuws: [{ tekst: "lanceert deze maand een nieuw SaaS-platform voor MKB-klanten", type: "product" }] },
+      { naam: "IT Hub Tilburg", sector: "it", locatie: "Tilburg", omvang: "klein",
+        vacatures: [{ titel: "Junior systeembeheerder", niveau: "HBO", urgentie: "midden", sinds: "3 weken", aantal: 1 }],
+        nieuws: [{ tekst: "groeit door overstap van klanten naar managed-services", type: "groei" }] },
+
+      // MARKETING & SALES
+      { naam: "Bureau Bink Marketing", sector: "marketing", locatie: "Breda", omvang: "klein",
+        vacatures: [
+          { titel: "Junior accountmanager", niveau: "HBO", urgentie: "hoog", sinds: "1 week", aantal: 1 },
+          { titel: "Stagiair online marketing", niveau: "HBO", urgentie: "midden", sinds: "2 weken", aantal: 1 }
+        ],
+        nieuws: [
+          { tekst: "opende een tweede kantoor in Breda Centrum", type: "groei" },
+          { tekst: "haalde een groot retailmerk binnen als klant", type: "investering" }
+        ] },
+      { naam: "Reclamebureau De Stad", sector: "marketing", locatie: "Tilburg", omvang: "klein",
+        vacatures: [{ titel: "Marketing assistent", niveau: "HBO", urgentie: "midden", sinds: "2 weken", aantal: 1 }],
+        nieuws: [{ tekst: "won meerdere awards op een recent reclamebureau-event", type: "event" }] },
+      { naam: "Digital Agency Etten", sector: "marketing", locatie: "Etten-Leur", omvang: "klein",
+        vacatures: [{ titel: "Online marketeer / SEA-specialist", niveau: "HBO", urgentie: "hoog", sinds: "1 week", aantal: 2 }],
+        nieuws: [{ tekst: "verdubbelde de klantportefeuille in 12 maanden tijd", type: "groei" }] },
+
+      // BOUW
+      { naam: "Bouwbedrijf West-Brabant", sector: "bouw", locatie: "Breda", omvang: "mkb",
+        vacatures: [
+          { titel: "Bouwvakker / hulpmonteur", niveau: "MBO", urgentie: "hoog", sinds: "10 dagen", aantal: 4 },
+          { titel: "Junior werkvoorbereider", niveau: "HBO", urgentie: "midden", sinds: "1 maand", aantal: 1 }
+        ],
+        nieuws: [{ tekst: "won een groot utiliteitsbouw-project in West-Brabant", type: "investering" }] },
+      { naam: "Aannemerij De Maas", sector: "bouw", locatie: "Tilburg", omvang: "klein",
+        vacatures: [{ titel: "Bouwvakker", niveau: "MBO", urgentie: "midden", sinds: "2 weken", aantal: 2 }],
+        nieuws: [{ tekst: "richt zich steeds meer op renovatie van karakteristieke panden", type: "product" }] },
+      { naam: "Renovatie Roosendaal", sector: "bouw", locatie: "Roosendaal", omvang: "klein",
+        vacatures: [{ titel: "Klusser / timmerman", niveau: "MBO", urgentie: "midden", sinds: "3 weken", aantal: 2 }],
+        nieuws: [{ tekst: "ziet de vraag naar duurzame renovatie sterk toenemen", type: "groei" }] },
+
+      // ZORG
+      { naam: "Zorggroep West-Brabant", sector: "zorg", locatie: "Roosendaal", omvang: "groot",
+        vacatures: [
+          { titel: "Verzorgende IG (flexpool)", niveau: "MBO", urgentie: "urgent", sinds: "doorlopend", aantal: 8 },
+          { titel: "Verpleegkundige (HBO)", niveau: "HBO", urgentie: "hoog", sinds: "2 weken", aantal: 3 }
+        ],
+        nieuws: [{ tekst: "kondigt aan dit jaar 50 extra zorgmedewerkers te willen werven", type: "groei" }] },
+      { naam: "Thuiszorg Brabant", sector: "zorg", locatie: "Breda", omvang: "mkb",
+        vacatures: [{ titel: "Thuiszorgmedewerker", niveau: "MBO", urgentie: "hoog", sinds: "1 week", aantal: 4 }],
+        nieuws: [{ tekst: "breidt het werkgebied uit naar Etten-Leur en Oosterhout", type: "groei" }] },
+
+      // FINANCE
+      { naam: "Accountantskantoor Van Es", sector: "finance", locatie: "Breda", omvang: "mkb",
+        vacatures: [
+          { titel: "Junior accountant", niveau: "HBO", urgentie: "midden", sinds: "1 maand", aantal: 1 },
+          { titel: "Assistent-controller", niveau: "WO", urgentie: "midden", sinds: "3 weken", aantal: 1 }
+        ],
+        nieuws: [{ tekst: "nam onlangs een collega-kantoor over en groeit fors", type: "investering" }] },
+      { naam: "Boekhoudbureau Tilburg", sector: "finance", locatie: "Tilburg", omvang: "klein",
+        vacatures: [{ titel: "Boekhoudkundig medewerker", niveau: "HBO", urgentie: "midden", sinds: "2 weken", aantal: 1 }],
+        nieuws: [{ tekst: "ziet door fiscale wijzigingen veel ZZP-klanten naar zich toekomen", type: "event" }] },
+
+      // TECHNIEK
+      { naam: "Installatiebedrijf West", sector: "techniek", locatie: "Tilburg", omvang: "mkb",
+        vacatures: [
+          { titel: "Servicemonteur", niveau: "MBO", urgentie: "urgent", sinds: "5 dagen", aantal: 3 },
+          { titel: "Junior projectvoorbereider", niveau: "HBO", urgentie: "midden", sinds: "1 maand", aantal: 1 }
+        ],
+        nieuws: [{ tekst: "investeert in opleiding van jonge monteurs via leer-werk-traject", type: "investering" }] },
+      { naam: "TechService Breda", sector: "techniek", locatie: "Breda", omvang: "klein",
+        vacatures: [{ titel: "Technisch monteur", niveau: "MBO", urgentie: "hoog", sinds: "1 week", aantal: 2 }],
+        nieuws: [{ tekst: "won een service-contract met een groot logistiek bedrijf", type: "investering" }] },
+      { naam: "Service Bouw & Installatie", sector: "techniek", locatie: "Bergen op Zoom", omvang: "mkb",
+        vacatures: [{ titel: "Monteur", niveau: "MBO", urgentie: "hoog", sinds: "10 dagen", aantal: 3 }],
+        nieuws: [{ tekst: "ziet veel groei in industriële installaties", type: "groei" }] }
+    ];
 
     // --- VOORBEELDEN ---
     const VOORBEELDEN = {
-      logistiek: {
-        k_naam: "Tom", k_niveau: "MBO", k_studie: "Logistiek medewerker",
-        k_voorkeur: "logistiek", k_uren: "fulltime", k_ervaring: "wat",
-        k_sterk: "Aanpakker, fysiek sterk, woont 10 min van Tilburg, heeft heftruckcertificaat",
-        b_naam: "Brabant Logistics Group", b_sector: "logistiek", b_locatie: "Tilburg",
-        b_omvang: "mkb", b_functie: "Orderpicker / magazijnmedewerker",
-        b_extra: "Sterke groei, opent extra DC in Q3, heeft 8 vacatures openstaan"
-      },
-      marketing: {
-        k_naam: "Sanne", k_niveau: "HBO", k_studie: "Commerciële Economie",
-        k_voorkeur: "marketing", k_uren: "fulltime", k_ervaring: "wat",
-        k_sterk: "Communicatief sterk, ervaring met social media campagnes, zoekt commerciële starterspositie",
-        b_naam: "Bureau Bink Marketing", b_sector: "marketing", b_locatie: "Breda",
-        b_omvang: "mkb", b_functie: "Junior accountmanager",
-        b_extra: "Werft elk jaar 2-3 starters, kandidaatgedreven open voor onbekende profielen"
-      },
-      zorg: {
-        k_naam: "Lisa", k_niveau: "HBO", k_studie: "Verpleegkunde",
-        k_voorkeur: "zorg", k_uren: "parttime", k_ervaring: "wat",
-        k_sterk: "Empathisch, flexibel, beschikbaar in weekenden",
-        b_naam: "Zorggroep West-Brabant", b_sector: "zorg", b_locatie: "Roosendaal",
-        b_omvang: "groot", b_functie: "Verzorgende IG",
-        b_extra: "Permanente vraag naar flexpool, werkt veel met YC-concurrenten"
-      }
+      logistiek: { k_naam: "Tom",   k_niveau: "MBO", k_studie: "Logistiek medewerker", k_voorkeur: "logistiek", k_uren: "fulltime", k_ervaring: "wat",    k_regio: "tilburg", k_aantal: "5", k_sterk: "Aanpakker, fysiek sterk, woont in Tilburg, heeft heftruckcertificaat" },
+      marketing: { k_naam: "Sanne", k_niveau: "HBO", k_studie: "Commerciële Economie", k_voorkeur: "marketing", k_uren: "fulltime", k_ervaring: "wat",    k_regio: "breda",   k_aantal: "5", k_sterk: "Communicatief sterk, ervaring met social media campagnes, zoekt commerciële starterspositie" },
+      zorg:      { k_naam: "Lisa",  k_niveau: "HBO", k_studie: "Verpleegkunde",        k_voorkeur: "zorg",      k_uren: "parttime", k_ervaring: "wat",    k_regio: "",        k_aantal: "5", k_sterk: "Empathisch, flexibel, beschikbaar in weekenden" },
+      it:        { k_naam: "Daan",  k_niveau: "WO",  k_studie: "Informatica",          k_voorkeur: "it",        k_uren: "fulltime", k_ervaring: "weinig", k_regio: "",        k_aantal: "5", k_sterk: "Recent afgestudeerd, sterk in front-end, zoekt junior developer rol" }
     };
 
     // ======================================================================
-    // SCORING ENGINE
+    // MATCHING ENGINE
     // ======================================================================
-    function berekenMatch(k, b) {
-      // Lookup data
-      const sectorData = SECTOREN[b.sector] || SECTOREN.anders;
+    function niveauOK(kandidaatNiveau, vacatureNiveau) {
+      // MBO/HBO/WO ranking. Kandidaat moet MINSTENS niveau van vacature hebben,
+      // maar HBO mag ook MBO-werk doen (overkwalificatie acceptabel).
+      const rank = { MBO: 1, HBO: 2, WO: 3 };
+      return rank[kandidaatNiveau] >= rank[vacatureNiveau];
+    }
+
+    function vindBesteVacature(k, b) {
+      // Zoek de vacature met hoogste fit-score voor deze kandidaat
+      let beste = null;
+      let besteScore = -1;
+      for (const v of (b.vacatures || [])) {
+        let s = 0;
+        // Sectorvoorkeur match (kandidaat-voorkeur vs bedrijf-sector)
+        if (k.voorkeur === b.sector) s += 100;
+        else if (k.voorkeur === "breed") s += 60;
+        else {
+          const vData = SECTOREN[k.voorkeur];
+          const bData = SECTOREN[b.sector];
+          if (vData && bData && vData.type === bData.type) s += 35;
+          else s += 5;
+        }
+        // Niveau-match
+        if (niveauOK(k.niveau, v.niveau)) s += 50;
+        else s += 5;
+        // Urgentie als tiebreaker
+        s += URGENTIE_SCORE[v.urgentie] || 0;
+        if (s > besteScore) { besteScore = s; beste = v; }
+      }
+      return beste;
+    }
+
+    function berekenMatch(k, b, regioVoorkeur) {
+      const sectorData   = SECTOREN[b.sector] || SECTOREN.anders;
       const voorkeurData = SECTOREN[k.voorkeur] || null;
-      const locKey = (b.locatie || "").toLowerCase().trim();
-      const locData = LOCATIES[locKey] || null;
+      const locKey       = (b.locatie || "").toLowerCase().trim();
+      const locData      = LOCATIES[locKey] || null;
 
-      // === Weegfactoren (totaal max = 100) ===
+      // === Weegfactoren (totaal max 100) ===
 
-      // 1. Sector-potentieel voor YC (0-25)
-      const sectorPunten = (sectorData.ycPotentieel / 10) * 25;
+      // 1. Sector-potentieel YC (0-10) — supportive
+      const sectorPunten = (sectorData.ycPotentieel / 10) * 10;
 
-      // 2. Locatie binnen werkgebied Breda/Tilburg (0-20)
-      let locatiePunten;
-      if (locData) {
-        locatiePunten = (locData.score / 10) * 20;
-      } else if (locKey === "") {
-        locatiePunten = 10; // onbekend → neutraal
-      } else if (locKey.includes("brabant")) {
-        locatiePunten = 8;
-      } else {
-        locatiePunten = 4;
+      // 2. Locatie + regio-voorkeur (0-15)
+      let locatiePunten = locData ? (locData.score / 10) * 15 : 4;
+      if (regioVoorkeur === "breda" && locData) {
+        if (locData.vestiging === "Breda") locatiePunten = Math.min(15, locatiePunten + 2);
+        else if (locData.vestiging === "Tilburg") locatiePunten = Math.max(0, locatiePunten - 4);
+      } else if (regioVoorkeur === "tilburg" && locData) {
+        if (locData.vestiging === "Tilburg") locatiePunten = Math.min(15, locatiePunten + 2);
+        else if (locData.vestiging === "Breda") locatiePunten = Math.max(0, locatiePunten - 4);
       }
 
-      // 3. Bedrijfsomvang (sweet spot = MKB) (0-15)
-      const omvangPunten = (OMVANG_SCORE[b.omvang] / 10) * 15;
+      // 3. Bedrijfsomvang (0-5)
+      const omvangPunten = (OMVANG_SCORE[b.omvang] / 10) * 5;
 
-      // 4. Kandidaat-sectormatch (0-20)
+      // 4. Kandidaat-sectorfit (0-25) — primair criterium
       let kandidaatFitPunten;
-      if (k.voorkeur === "breed") {
-        kandidaatFitPunten = 14; // breed = altijd redelijke fit
-      } else if (k.voorkeur === b.sector) {
-        kandidaatFitPunten = 20; // perfecte match
-      } else if (voorkeurData && voorkeurData.type === sectorData.type) {
-        kandidaatFitPunten = 13; // zelfde type werk
-      } else {
-        kandidaatFitPunten = 8;
+      if (k.voorkeur === "breed")            kandidaatFitPunten = 18;
+      else if (k.voorkeur === b.sector)      kandidaatFitPunten = 25;
+      else if (voorkeurData && voorkeurData.type === sectorData.type) kandidaatFitPunten = 12;
+      else                                   kandidaatFitPunten = 4;
+
+      // 5. Vacature-match / snelheid-tot-plaatsing (0-25) — wat de KDD direct kan oppakken
+      const besteVac = vindBesteVacature(k, b);
+      let vacaturePunten = 0;
+      let isVacatureFit = false;
+      if (besteVac) {
+        const sectorMatch = (k.voorkeur === b.sector) || (k.voorkeur === "breed");
+        const niveauMatch = niveauOK(k.niveau, besteVac.niveau);
+        if (sectorMatch && niveauMatch) {
+          vacaturePunten = URGENTIE_SCORE[besteVac.urgentie] || 10;
+          isVacatureFit = true;
+        } else if (niveauMatch) {
+          vacaturePunten = (URGENTIE_SCORE[besteVac.urgentie] || 10) * 0.55;
+        } else {
+          vacaturePunten = (URGENTIE_SCORE[besteVac.urgentie] || 10) * 0.25;
+        }
       }
 
-      // 5. Niveau-fit met sector (0-10)
-      let niveauPunten;
-      if (sectorData.niveau.includes(k.niveau)) {
-        niveauPunten = 10;
-      } else {
-        niveauPunten = 5;
-      }
+      // 6. Niveau-fit met sector (0-5)
+      const niveauPunten = sectorData.niveau.includes(k.niveau) ? 5 : 2;
 
-      // 6. Beschikbaarheid + ervaring (0-10)
+      // 7. Recente bedrijfsactiviteit (0-5) — groei = behoefte aan personeel
+      let activiteitPunten = 0;
+      for (const n of (b.nieuws || [])) {
+        activiteitPunten += (NIEUWS_TYPE_BOOST[n.type] || 2);
+      }
+      activiteitPunten = Math.min(5, activiteitPunten);
+
+      // 8. Beschikbaarheid + ervaring (0-10)
       let beschikbaarheidPunten = 5;
       if (k.uren === "fulltime") beschikbaarheidPunten += 3;
       else if (k.uren === "parttime") beschikbaarheidPunten += 2;
@@ -887,27 +778,17 @@
       beschikbaarheidPunten = Math.min(10, beschikbaarheidPunten);
 
       const totaal = sectorPunten + locatiePunten + omvangPunten +
-                     kandidaatFitPunten + niveauPunten + beschikbaarheidPunten;
+                     kandidaatFitPunten + vacaturePunten + niveauPunten +
+                     activiteitPunten + beschikbaarheidPunten;
 
-      // Score op schaal van 1-10, afgerond op 1 decimaal
       let score = totaal / 10;
-      score = Math.max(2.5, Math.min(9.8, score)); // beperk extremen voor realisme
+      score = Math.max(2.5, Math.min(9.8, score));
       score = Math.round(score * 10) / 10;
 
       return {
-        score,
-        sectorData,
-        voorkeurData,
-        locData,
-        locKey,
-        breakdown: {
-          sector: Math.round(sectorPunten * 10) / 10,
-          locatie: Math.round(locatiePunten * 10) / 10,
-          omvang: Math.round(omvangPunten * 10) / 10,
-          kandidaatFit: Math.round(kandidaatFitPunten * 10) / 10,
-          niveau: niveauPunten,
-          beschikbaarheid: beschikbaarheidPunten
-        }
+        score, sectorData, voorkeurData, locData, locKey,
+        besteVacature: besteVac,
+        isVacatureFit
       };
     }
 
@@ -916,115 +797,79 @@
     // ======================================================================
     function bepaalLabel(score) {
       if (score >= 8.0) return { titel: "Sterke match", tag: "HOGE PRIORITEIT", klasse: "high" };
-      if (score >= 6.5) return { titel: "Goede match", tag: "MIDDEN PRIORITEIT", klasse: "high" };
+      if (score >= 6.5) return { titel: "Goede match",  tag: "MIDDEN PRIORITEIT", klasse: "high" };
       if (score >= 5.0) return { titel: "Redelijke match", tag: "OPVOLGEN", klasse: "med" };
       if (score >= 4.0) return { titel: "Beperkte match", tag: "LAGE PRIORITEIT", klasse: "med" };
-      return { titel: "Geen prioriteit", tag: "MARKEER", klasse: "low" };
+      return { titel: "Geen prioriteit", tag: "LATEN", klasse: "low" };
     }
 
-    function vestigingVoor(locData) {
-      if (locData && locData.vestiging) return locData.vestiging;
-      return "Breda/Tilburg";
-    }
-
-    function genereerSummary(score, k, b, m) {
-      const label = bepaalLabel(score);
-      const vestiging = vestigingVoor(m.locData);
-      if (score >= 8.0) {
-        return `${b.naam} past sterk in het YoungCapital ${vestiging}-portfolio. ${k.naam}'s profiel sluit goed aan op ${m.sectorData.label.toLowerCase()}.`;
-      }
-      if (score >= 6.5) {
-        return `${b.naam} biedt commercieel potentieel voor YC ${vestiging}. ${k.naam} is een redelijk passend startersprofiel om mee te openen.`;
-      }
-      if (score >= 5.0) {
-        return `${b.naam} is een opvolgkandidaat. ${k.naam} past niet als directe match, maar de relatie kan opgebouwd worden.`;
-      }
-      return `${b.naam} valt buiten de YC-sweet-spot, of ${k.naam} mist op cruciale aansluiting.`;
-    }
+    function vestigingVoor(locData) { return locData && locData.vestiging ? locData.vestiging : "Breda/Tilburg"; }
 
     function genereerOnderbouwing(k, b, m) {
       const vestiging = vestigingVoor(m.locData);
-      const omvangTekst = OMVANG_LABEL[b.omvang];
       const sectorTekst = m.sectorData.label.toLowerCase();
-      const urenTekst = UREN_LABEL[k.uren];
-      const ervaringTekst = ERVARING_LABEL[k.ervaring];
-      const studie = k.studie ? k.studie : `${k.niveau}-opleiding`;
+      const studie = k.studie || `${k.niveau}-opleiding`;
 
       const regels = [];
 
-      // Sectorzin
+      // Sector & locatie
       if (m.sectorData.ycPotentieel >= 8.5) {
-        regels.push(`${b.naam} opereert in de ${sectorTekst}-sector, één van de kernsectoren waarin YoungCapital ${vestiging} structureel veel young professionals plaatst.`);
-      } else if (m.sectorData.ycPotentieel >= 7.0) {
-        regels.push(`${b.naam} opereert in de ${sectorTekst}-sector, een werkveld waar YoungCapital ${vestiging} regelmatig in plaatst.`);
+        regels.push(`${b.naam} (${sectorTekst}, ${b.locatie}) is een kernsectorbedrijf voor YoungCapital ${vestiging}.`);
       } else {
-        regels.push(`${b.naam} opereert in de ${sectorTekst}-sector, geen kernportfolio van YoungCapital ${vestiging} maar wel benaderbaar bij specifieke vraag.`);
+        regels.push(`${b.naam} (${sectorTekst}, ${b.locatie}) wordt vanuit YoungCapital ${vestiging} bediend.`);
       }
 
-      // Locatiezin
-      if (m.locData && m.locData.score >= 9) {
-        regels.push(`Met vestiging in ${b.locatie} ligt het bedrijf binnen de directe acquisitiezone van YC ${vestiging}.`);
-      } else if (m.locData && m.locData.score >= 7) {
-        regels.push(`${b.locatie} valt binnen ${m.locData.regio} en wordt vanuit YC ${vestiging} bediend.`);
-      } else if (m.locData) {
-        regels.push(`${b.locatie} ligt buiten het kerngebied West-/Midden-Brabant; account-overdracht naar een andere YC-vestiging kan opportuun zijn.`);
-      } else if (m.locKey === "") {
-        regels.push(`Locatie is niet ingevuld. Verifieer eerst of het bedrijf binnen West-/Midden-Brabant valt vóór verdere actie.`);
+      // Vacature-onderbouwing — de echte reden waarom dit een match is
+      if (m.besteVacature && m.isVacatureFit) {
+        const v = m.besteVacature;
+        regels.push(`Belangrijk: er staat een ${v.urgentie === "urgent" ? "**urgente**" : v.urgentie === "hoog" ? "hoogprioritaire" : ""} vacature open voor "${v.titel}" (${v.aantal} plek${v.aantal > 1 ? "ken" : ""}, al ${v.sinds} open). ${k.naam} (${k.niveau}-${studie}) past hier direct op qua niveau en richting.`);
+      } else if (m.besteVacature) {
+        const v = m.besteVacature;
+        regels.push(`Het bedrijf heeft een vacature voor "${v.titel}" (${URGENTIE_LABEL[v.urgentie].toLowerCase()}); ${k.naam}'s profiel sluit niet 100% aan, maar verdient verkenning bij intake.`);
       } else {
-        regels.push(`${b.locatie} ligt buiten het primaire werkgebied; toets eerst of YC ${vestiging} hier in mag stappen.`);
+        regels.push(`Geen acute vacatures gedetecteerd; benadering verloopt via relatieopbouw voor toekomstige behoefte.`);
       }
 
-      // Kandidaatzin
-      if (k.voorkeur === b.sector) {
-        regels.push(`${k.naam} (${studie}, ${k.niveau}) heeft expliciete voorkeur voor ${sectorTekst} en is met ${ervaringTekst} klaar voor plaatsing op ${urenTekst}-basis${b.functie ? ` in een rol als "${b.functie}"` : ""}.`);
-      } else if (k.voorkeur === "breed") {
-        regels.push(`${k.naam} (${studie}, ${k.niveau}) is breed inzetbaar en kan met ${ervaringTekst} ingezet worden op ${urenTekst}-basis${b.functie ? ` in een rol als "${b.functie}"` : ""}.`);
-      } else {
-        const voorkeur = m.voorkeurData ? m.voorkeurData.label.toLowerCase() : "een andere richting";
-        regels.push(`${k.naam} (${studie}, ${k.niveau}) heeft voorkeur voor ${voorkeur}, niet voor ${sectorTekst}; toets bij intake of de kandidaat openstaat voor deze rol${b.functie ? ` ("${b.functie}")` : ""}.`);
+      // Recente activiteit
+      if (b.nieuws && b.nieuws.length > 0) {
+        regels.push(`Recent signaal: ${b.naam} ${b.nieuws[0].tekst}.`);
       }
 
-      // Eventuele extra context
-      if (b.extra && b.extra.trim().length > 0) {
-        regels.push(`Extra signaal: ${b.extra.trim().toLowerCase().replace(/\.$/,"")}.`);
-      }
+      // Beschikbaarheid kandidaat
+      regels.push(`${k.naam} is beschikbaar voor ${UREN_LABEL[k.uren]} en heeft ${ERVARING_LABEL[k.ervaring]}.`);
 
       return regels.join(" ");
     }
 
     function genereerBelopening(k, b, m) {
       const vestiging = vestigingVoor(m.locData);
-      const sectorTekst = m.sectorData.label.toLowerCase();
       const studie = k.studie || `${k.niveau}-opleiding`;
+      const haak = (b.nieuws && b.nieuws[0]) ? `Ik zag dat ${b.naam} ${b.nieuws[0].tekst} — gefeliciteerd. ` : "";
+      const vacZin = m.besteVacature && m.isVacatureFit
+        ? `Naar aanleiding daarvan dacht ik direct aan uw vacature "${m.besteVacature.titel}": ik heb ${k.naam} in beeld, ${k.niveau}-${studie}, beschikbaar voor ${UREN_LABEL[k.uren]} en gericht op ${m.sectorData.label.toLowerCase()}.`
+        : `Ik wilde u vragen waar uw personele behoefte op dit moment ligt — ik heb namelijk een sterk profiel beschikbaar dat goed past bij ${m.sectorData.label.toLowerCase()}: ${k.naam}, ${k.niveau}-${studie}.`;
 
-      const intro = `Goedemorgen, u spreekt met [JOUW NAAM] van YoungCapital ${vestiging}.`;
-      let kern;
-      if (k.voorkeur === b.sector || k.voorkeur === "breed") {
-        kern = `Ik bel u over ${b.naam} omdat ik op dit moment een sterk profiel beschikbaar heb dat specifiek aansluit op ${sectorTekst}: ${k.naam}, ${k.niveau}-${studie}${b.functie ? `, geschikt voor een rol als "${b.functie}"` : ""}.`;
-      } else {
-        kern = `Ik bel u over ${b.naam} omdat we vanuit ${vestiging} actief MKB-bedrijven in ${m.locData ? m.locData.regio : "uw regio"} bedienen, en ik benieuwd ben naar de personele uitdagingen waar u nu tegenaan loopt.`;
-      }
-      const slot = `Heeft u 2 minuten zodat ik kort kan toelichten wat dit voor ${b.naam} kan betekenen?`;
-
-      return `${intro} ${kern} ${slot}`;
+      return `Goedemorgen, u spreekt met [JOUW NAAM] van YoungCapital ${vestiging}. ${haak}${vacZin} Heeft u 2 minuten zodat ik kort kan toelichten wat dit voor ${b.naam} kan betekenen?`;
     }
 
     function genereerMail(k, b, m) {
       const vestiging = vestigingVoor(m.locData);
-      const sectorTekst = m.sectorData.label.toLowerCase();
       const studie = k.studie || `${k.niveau}-opleiding`;
-      const subject = `${b.naam} – passend young professional profiel vanuit YoungCapital ${vestiging}`;
+      const subject = m.besteVacature && m.isVacatureFit
+        ? `Reactie op vacature "${m.besteVacature.titel}" — passend profiel vanuit YoungCapital ${vestiging}`
+        : `${b.naam} – passend young professional profiel vanuit YoungCapital ${vestiging}`;
 
       const pitch = k.sterk && k.sterk.trim()
         ? `${k.sterk.trim().replace(/\.$/,"")}.`
         : `${k.naam} heeft ${ERVARING_LABEL[k.ervaring]} en is beschikbaar voor ${UREN_LABEL[k.uren]}.`;
 
-      let tweede;
-      if (m.score >= 7.0) {
-        tweede = `${b.naam} viel mij op binnen de ${sectorTekst}-sector in ${b.locatie || m.locData && m.locData.regio || "West-Brabant"}, en ik denk dat dit profiel een interessante aanvulling kan zijn op uw team${b.functie ? ` (bijvoorbeeld voor een functie als ${b.functie})` : ""}.`;
-      } else {
-        tweede = `Ik benader ${b.naam} omdat we vanuit YoungCapital ${vestiging} structureel ${sectorTekst}-bedrijven in deze regio ondersteunen met young professionals — en ik graag eens in gesprek wil over wat u zoekt.`;
-      }
+      const haak = (b.nieuws && b.nieuws[0])
+        ? `Mij viel op dat ${b.naam} ${b.nieuws[0].tekst} — een mooie ontwikkeling. `
+        : ``;
+
+      const vacBlok = m.besteVacature && m.isVacatureFit
+        ? `Ik zag dat u op dit moment een vacature open heeft staan voor "${m.besteVacature.titel}" (al ${m.besteVacature.sinds} actief). Hier denk ik dat ik direct iets aan kan bijdragen.\n\n`
+        : ``;
 
       const body =
 `Onderwerp: ${subject}
@@ -1032,208 +877,293 @@
 Beste relatiemanager,
 
 Mijn naam is [JOUW NAAM] en ik ben werkzaam bij YoungCapital ${vestiging}.
-${tweede}
-
-Concreet beschikbaar:
+${haak}${vacBlok}Concreet beschikbaar:
 • ${k.naam} – ${k.niveau}-${studie}
 • Voorkeur: ${m.voorkeurData ? m.voorkeurData.label : "breed inzetbaar"}
 • Beschikbaar: ${UREN_LABEL[k.uren]}
 • Profiel: ${pitch}
 
-Ik bel u graag de komende dagen even kort op om te kijken of dit profiel matcht met openstaande behoefte binnen ${b.naam}. Past het op dit moment niet? Ook prima — ik hoor het dan graag, dan houden we elkaar voor toekomstige kansen op de hoogte.
+Ik bel u graag de komende dagen kort op om te kijken of dit profiel matcht met uw openstaande behoefte. Past het op dit moment niet? Ook prima — ik hoor het dan graag, dan houden we elkaar voor toekomstige kansen op de hoogte.
 
 Met vriendelijke groet,
 [JOUW NAAM]
 YoungCapital ${vestiging}
 [telefoonnummer] | [e-mail]`;
-
       return body;
     }
 
     function genereerVervolgstap(k, b, m) {
       const vestiging = vestigingVoor(m.locData);
+      if (m.besteVacature && m.isVacatureFit && m.besteVacature.urgentie === "urgent") {
+        return `Acuut. Bel ${b.naam} vandaag nog (urgente vacature voor "${m.besteVacature.titel}", al ${m.besteVacature.sinds} open). Bereid ${k.naam} parallel voor op een korte intake; bij interesse kun je waarschijnlijk binnen enkele dagen voorstellen voor een kennismakingsgesprek.`;
+      }
       if (m.score >= 8.0) {
-        return `Bel ${b.naam} binnen 24-48 uur (hoge prioriteit). Bereid ${k.naam} parallel voor op een korte intake; bij interesse kun je waarschijnlijk binnen een week voorstellen voor een kennismakingsgesprek. Log de outreach in het CRM met label "warme lead — YC ${vestiging}".`;
+        return `Bel ${b.naam} binnen 24-48 uur (hoge prioriteit). Verwijs in het gesprek naar ${b.nieuws && b.nieuws[0] ? "het nieuws over " + b.nieuws[0].tekst : "actuele ontwikkelingen"}. Bereid ${k.naam} parallel voor op een intake. Log de outreach in het CRM met label "warme lead — YC ${vestiging}".`;
       }
       if (m.score >= 6.5) {
         return `Verstuur de outreach-mail vandaag en bel 2-3 werkdagen later op om de interesse te peilen. Plan een terugkerende reminder over 2 weken voor een tweede touch indien geen reactie. Voeg ${b.naam} toe aan de actieve sector-pipeline van YC ${vestiging}.`;
       }
       if (m.score >= 5.0) {
-        return `Voeg ${b.naam} toe aan de nurturing-lijst en stuur de outreach-mail. Plan een opvolgmoment over 3-4 weken in het CRM. Houd ${k.naam} parallel actief in andere prioriteiten — geen blocking match.`;
+        return `Voeg ${b.naam} toe aan de nurturing-lijst en stuur de outreach-mail. Plan een opvolgmoment over 3-4 weken in het CRM. Houd ${k.naam} parallel actief — geen blocking match.`;
       }
-      if (m.score >= 4.0) {
-        return `Lage prioriteit voor nu. Voeg ${b.naam} toe aan het CRM ter monitoring (bijvoorbeeld op nieuwsberichten of vacaturefeed). Heroverweeg over 2-3 maanden, of bij een passender kandidaatprofiel.`;
+      return `Lage prioriteit. Voeg ${b.naam} toe aan het CRM ter monitoring. Heroverweeg over enkele maanden of bij een passender kandidaatprofiel.`;
+    }
+
+    function vindTopMatches(k, regioVoorkeur, n) {
+      const matches = BEDRIJVEN_DATABASE.map(b => ({ bedrijf: b, match: berekenMatch(k, b, regioVoorkeur) }));
+      matches.sort((a, b) => b.match.score - a.match.score);
+      return matches.slice(0, n);
+    }
+
+    function statistieken(k) {
+      let bedrijvenMetVacature = 0;
+      let totaalVacatures = 0;
+      let urgenteVacatures = 0;
+      for (const b of BEDRIJVEN_DATABASE) {
+        let heeftPassendeVac = false;
+        for (const v of (b.vacatures || [])) {
+          const sectorMatch = (k.voorkeur === b.sector) || (k.voorkeur === "breed");
+          const niveauMatch = niveauOK(k.niveau, v.niveau);
+          if (sectorMatch && niveauMatch) {
+            heeftPassendeVac = true;
+            totaalVacatures += (v.aantal || 1);
+            if (v.urgentie === "urgent") urgenteVacatures += (v.aantal || 1);
+          }
+        }
+        if (heeftPassendeVac) bedrijvenMetVacature++;
       }
-      return `Geen actieve actie aanbevolen voor deze combinatie. Overweeg ${b.naam} eventueel door te zetten naar een andere YoungCapital-vestiging als de geografie beter past, of het profiel van ${k.naam} eerst te matchen met een passender bedrijf binnen West-/Midden-Brabant.`;
+      return { bedrijvenMetVacature, totaalVacatures, urgenteVacatures };
     }
 
     // ======================================================================
-    // UI WIRING
+    // UI
     // ======================================================================
     const $ = (id) => document.getElementById(id);
 
-    function leesInputs() {
+    function leesKandidaat() {
       return {
-        k: {
-          naam: $("k_naam").value.trim() || "de kandidaat",
-          niveau: $("k_niveau").value,
-          studie: $("k_studie").value.trim(),
-          voorkeur: $("k_voorkeur").value,
-          uren: $("k_uren").value,
-          ervaring: $("k_ervaring").value,
-          sterk: $("k_sterk").value.trim()
-        },
-        b: {
-          naam: $("b_naam").value.trim(),
-          sector: $("b_sector").value,
-          locatie: $("b_locatie").value.trim(),
-          omvang: $("b_omvang").value,
-          functie: $("b_functie").value.trim(),
-          extra: $("b_extra").value.trim()
-        }
+        naam: $("k_naam").value.trim() || "de kandidaat",
+        niveau: $("k_niveau").value,
+        studie: $("k_studie").value.trim(),
+        voorkeur: $("k_voorkeur").value,
+        uren: $("k_uren").value,
+        ervaring: $("k_ervaring").value,
+        regio: $("k_regio").value,
+        aantal: parseInt($("k_aantal").value, 10) || 5,
+        sterk: $("k_sterk").value.trim()
       };
     }
 
-    function valideer({ k, b }) {
+    function valideer(k) {
       const fouten = [];
       if (!k.naam || k.naam === "de kandidaat") fouten.push("Vul een voornaam voor de kandidaat in.");
-      if (!b.naam) fouten.push("Vul een bedrijfsnaam in.");
+      if (!k.voorkeur) fouten.push("Kies een voorkeurssector voor de kandidaat.");
       return fouten;
     }
 
-    function toonError(msg) {
-      const box = $("errorBox");
-      box.textContent = msg;
-      box.classList.remove("hidden");
-    }
-
-    function verbergError() {
-      $("errorBox").classList.add("hidden");
-    }
+    function toonError(msg) { const box = $("errorBox"); box.textContent = msg; box.classList.remove("hidden"); }
+    function verbergError() { $("errorBox").classList.add("hidden"); }
 
     function laadVoorbeeld(naam) {
-      const v = VOORBEELDEN[naam];
-      if (!v) return;
-      Object.entries(v).forEach(([id, val]) => {
-        const el = $(id);
-        if (el) el.value = val;
-      });
+      const v = VOORBEELDEN[naam]; if (!v) return;
+      Object.entries(v).forEach(([id, val]) => { const el = $(id); if (el) el.value = val; });
       verbergError();
       $("results").classList.add("hidden");
     }
 
     function wisFormulier() {
-      document.querySelectorAll("input[type=text], textarea").forEach(el => el.value = "");
-      $("k_niveau").value = "HBO";
-      $("k_voorkeur").value = "breed";
-      $("k_uren").value = "parttime";
-      $("k_ervaring").value = "wat";
-      $("b_sector").value = "marketing";
-      $("b_omvang").value = "mkb";
+      $("k_naam").value = ""; $("k_studie").value = ""; $("k_sterk").value = "";
+      $("k_niveau").value = "HBO"; $("k_voorkeur").value = "breed";
+      $("k_uren").value = "parttime"; $("k_ervaring").value = "wat";
+      $("k_regio").value = ""; $("k_aantal").value = "5";
       verbergError();
       $("results").classList.add("hidden");
     }
 
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"]/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[s]));
+    }
+
+    function maakVacatureLijst(b, m) {
+      if (!b.vacatures || b.vacatures.length === 0) {
+        return `<div class="output-text">Geen openstaande vacatures gedetecteerd.</div>`;
+      }
+      const items = b.vacatures.map(v => {
+        const isMatch = m.besteVacature && v.titel === m.besteVacature.titel;
+        const star = isMatch ? `<span style="color: var(--yc-orange); font-weight: 700;">★ </span>` : "";
+        return `<li class="vacature-item">
+          <div class="vac-titel">${star}${escapeHtml(v.titel)}
+            <span class="urgency-tag urgency-${v.urgentie}">${URGENTIE_LABEL[v.urgentie]}</span>
+          </div>
+          <div class="vac-meta">${escapeHtml(v.niveau)}-niveau · ${v.aantal} plek${v.aantal > 1 ? "ken" : ""} · al ${escapeHtml(v.sinds)} open</div>
+        </li>`;
+      }).join("");
+      return `<ul class="vacature-list">${items}</ul>`;
+    }
+
+    function maakNieuwsLijst(b) {
+      if (!b.nieuws || b.nieuws.length === 0) {
+        return `<div class="output-text">Geen recente ontwikkelingen.</div>`;
+      }
+      const items = b.nieuws.map(n => `
+        <li class="nieuws-item">
+          <span class="nieuws-icon ${n.type}">${NIEUWS_ICON[n.type] || "•"}</span>
+          <span><strong>${escapeHtml(b.naam)}</strong> ${escapeHtml(n.tekst)}.</span>
+        </li>
+      `).join("");
+      return `<ul class="nieuws-list">${items}</ul>`;
+    }
+
+    function maakBedrijfCard(matchObj, rank, k, autoOpen) {
+      const b = matchObj.bedrijf;
+      const m = matchObj.match;
+      const lbl = bepaalLabel(m.score);
+      const onderbouwing = genereerOnderbouwing(k, b, m);
+      const belopening   = genereerBelopening(k, b, m);
+      const mail         = genereerMail(k, b, m);
+      const vervolgstap  = genereerVervolgstap(k, b, m);
+      const id = "card-" + rank;
+      const expandedClass = autoOpen ? " expanded" : "";
+      const sectorLabel = m.sectorData.label;
+      const omvangShort = OMVANG_KORT[b.omvang] || b.omvang;
+
+      const urgentVac = m.besteVacature && m.besteVacature.urgentie === "urgent" && m.isVacatureFit;
+      const subText = urgentVac
+        ? `${escapeHtml(sectorLabel)} · ${escapeHtml(b.locatie)} · <span class="urgency-tag urgency-urgent">URGENTE VACATURE</span>`
+        : `${escapeHtml(sectorLabel)} · ${escapeHtml(b.locatie)} · ${escapeHtml(omvangShort)}`;
+
+      return `
+        <div class="bedrijf-card${expandedClass}" id="${id}">
+          <div class="bedrijf-header" data-toggle="${id}">
+            <div class="rank-badge">${rank}</div>
+            <div class="score-mini"><div class="num">${m.score.toFixed(1)}</div><div class="out">/10</div></div>
+            <div class="bedrijf-info">
+              <h3>${escapeHtml(b.naam)}</h3>
+              <p>${subText}</p>
+            </div>
+            <div class="score-label ${lbl.klasse}">${lbl.tag}</div>
+            <div class="chevron">▼</div>
+          </div>
+          <div class="bedrijf-details">
+            <div class="output-block">
+              <h4>Onderbouwing</h4>
+              <div class="output-text">${escapeHtml(onderbouwing).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")}</div>
+            </div>
+            <div class="output-block">
+              <h4>Openstaande vacatures</h4>
+              ${maakVacatureLijst(b, m)}
+            </div>
+            <div class="output-block">
+              <h4>Recente bedrijfsontwikkelingen</h4>
+              ${maakNieuwsLijst(b)}
+            </div>
+            <div class="output-block">
+              <h4>Persoonlijke belopening</h4>
+              <div class="output-text" id="${id}-bel">${escapeHtml(belopening)}</div>
+              <button type="button" class="copy-btn" data-copy="${id}-bel">Kopieer naar klembord</button>
+            </div>
+            <div class="output-block">
+              <h4>Outreach-mail</h4>
+              <div class="output-text" id="${id}-mail">${escapeHtml(mail)}</div>
+              <button type="button" class="copy-btn" data-copy="${id}-mail">Kopieer naar klembord</button>
+            </div>
+            <div class="output-block">
+              <h4>Aanbevolen vervolgstap</h4>
+              <div class="output-text vervolg">${escapeHtml(vervolgstap)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function maakRecap(k) {
+      const sect = (SECTOREN[k.voorkeur] || { label: "breed inzetbaar" }).label;
+      const studie = k.studie ? k.studie : `${k.niveau}-opleiding`;
+      const regioTxt = k.regio === "breda" ? " · regio-voorkeur Breda" : k.regio === "tilburg" ? " · regio-voorkeur Tilburg" : "";
+      return `<strong>${escapeHtml(k.naam)}</strong> · ${escapeHtml(k.niveau)}-${escapeHtml(studie)} · voorkeur ${escapeHtml(sect)} · ${escapeHtml(UREN_LABEL[k.uren])}${regioTxt}`;
+    }
+
     async function genereer() {
       verbergError();
-      const inputs = leesInputs();
-      const fouten = valideer(inputs);
-      if (fouten.length) {
-        toonError(fouten.join(" "));
-        return;
-      }
+      const k = leesKandidaat();
+      const fouten = valideer(k);
+      if (fouten.length) { toonError(fouten.join(" ")); return; }
 
-      // Loading animatie (gesimuleerd "AI denkt na...")
       $("results").classList.add("hidden");
       $("loading").classList.remove("hidden");
       $("submitBtn").disabled = true;
 
       const stappen = [
         "Kandidaatprofiel analyseren...",
-        "Bedrijfsprofiel matchen aan portfolio YoungCapital...",
-        "Sector- en locatiecriteria evalueren...",
-        "Outreach-content genereren..."
+        "30+ MKB-bedrijven in West-/Midden-Brabant scannen...",
+        "Openstaande vacatures matchen aan profiel...",
+        "Recente bedrijfsontwikkelingen analyseren...",
+        "Snelheid-tot-plaatsing berekenen...",
+        "Persoonlijke outreach genereren..."
       ];
       const msg = $("loading-msg");
-      let i = 0;
-      msg.textContent = stappen[0];
+      let i = 0; msg.textContent = stappen[0];
       const interval = setInterval(() => {
         i = (i + 1) % stappen.length;
         msg.textContent = stappen[i];
-      }, 450);
+      }, 380);
 
-      // Wacht ~1.6 seconden voor het effect
-      await new Promise(r => setTimeout(r, 1600));
+      await new Promise(r => setTimeout(r, 2200));
       clearInterval(interval);
 
-      // Bereken
-      const m = berekenMatch(inputs.k, inputs.b);
-      const label = bepaalLabel(m.score);
+      const top = vindTopMatches(k, k.regio, k.aantal);
+      const stats = statistieken(k);
 
-      // Vul UI
-      $("r-bedrijf").textContent = inputs.b.naam;
-      $("r-score").textContent = m.score.toFixed(1);
-      $("r-label").textContent = label.titel;
-      const tag = $("r-label-tag");
-      tag.textContent = label.tag;
-      tag.className = "score-label " + label.klasse;
-      $("r-summary").textContent = genereerSummary(m.score, inputs.k, inputs.b, m);
-      $("r-onderbouwing").textContent = genereerOnderbouwing(inputs.k, inputs.b, m);
-      $("r-belopening").textContent = genereerBelopening(inputs.k, inputs.b, m);
-      $("r-mail").textContent = genereerMail(inputs.k, inputs.b, m);
-      $("r-vervolgstap").textContent = genereerVervolgstap(inputs.k, inputs.b, m);
+      $("r-naam").textContent = k.naam;
+      $("r-title").firstChild.textContent = `Top ${top.length} bedrijven voor `;
+      $("r-recap").innerHTML = maakRecap(k);
+      $("r-stat-bedrijven").textContent = stats.bedrijvenMetVacature;
+      $("r-stat-vacatures").textContent = stats.totaalVacatures;
+      $("r-stat-urgent").textContent = stats.urgenteVacatures;
+
+      const html = top.map((mObj, idx) => maakBedrijfCard(mObj, idx + 1, k, idx === 0)).join("");
+      $("r-bedrijven").innerHTML = html;
+
+      document.querySelectorAll(".bedrijf-header").forEach(h => {
+        h.addEventListener("click", () => {
+          const id = h.dataset.toggle;
+          const card = $(id);
+          if (card) card.classList.toggle("expanded");
+        });
+      });
+
+      document.querySelectorAll(".copy-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const target = $(btn.dataset.copy);
+          if (!target) return;
+          const text = target.textContent;
+          const done = () => {
+            const orig = btn.textContent;
+            btn.textContent = "Gekopieerd!"; btn.classList.add("copied");
+            setTimeout(() => { btn.textContent = orig; btn.classList.remove("copied"); }, 1500);
+          };
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(done).catch(() => done());
+          } else { done(); }
+        });
+      });
 
       $("loading").classList.add("hidden");
       $("results").classList.remove("hidden");
       $("submitBtn").disabled = false;
-
-      // Scroll naar resultaat
-      setTimeout(() => {
-        $("results").scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 80);
+      setTimeout(() => $("results").scrollIntoView({ behavior: "smooth", block: "start" }), 80);
     }
 
-    // --- EVENT LISTENERS ---
     document.addEventListener("DOMContentLoaded", () => {
-      $("matchForm").addEventListener("submit", (e) => {
-        e.preventDefault();
-        genereer();
-      });
-
+      $("matchForm").addEventListener("submit", (e) => { e.preventDefault(); genereer(); });
       document.querySelectorAll(".chip[data-example]").forEach(btn => {
         btn.addEventListener("click", () => laadVoorbeeld(btn.dataset.example));
       });
-
       $("resetBtn").addEventListener("click", wisFormulier);
       $("newBtn").addEventListener("click", () => {
         $("results").classList.add("hidden");
         window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-
-      document.querySelectorAll(".copy-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const target = $(btn.dataset.copy);
-          if (!target) return;
-          navigator.clipboard.writeText(target.textContent).then(() => {
-            const original = btn.textContent;
-            btn.textContent = "Gekopieerd!";
-            btn.classList.add("copied");
-            setTimeout(() => {
-              btn.textContent = original;
-              btn.classList.remove("copied");
-            }, 1500);
-          }).catch(() => {
-            // Fallback voor oudere browsers
-            const range = document.createRange();
-            range.selectNode(target);
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
-            try { document.execCommand("copy"); } catch (e) {}
-            window.getSelection().removeAllRanges();
-            btn.textContent = "Gekopieerd!";
-            setTimeout(() => btn.textContent = "Kopieer naar klembord", 1500);
-          });
-        });
       });
     });
   </script>

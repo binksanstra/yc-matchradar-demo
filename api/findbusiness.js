@@ -1,9 +1,10 @@
 // api/findbusiness.js
-// Vercel Serverless Function — draait op de server, niet in de browser.
-// De ANTHROPIC_API_KEY blijft veilig in Vercel's environment variables.
+// Vercel Serverless Function — gebruikt Claude's getrainde kennis
+// van Nederlandse MKB-bedrijven in West-/Midden-Brabant.
 //
-// Deze endpoint gebruikt Claude met de web search tool om ECHTE MKB-bedrijven
-// in West-/Midden-Brabant te vinden die passen bij een ingevoerde KDD.
+// Geen web search (te fragiel voor een productie-tool). Claude heeft uit
+// zijn training ruime kennis van bekende bedrijven in deze regio en kan
+// die combineren met de KDD om realistische matches en outreach te genereren.
  
 import Anthropic from "@anthropic-ai/sdk";
  
@@ -31,102 +32,99 @@ export default async function handler(req, res) {
                   : k.regio === "breda" ? "Breda"
                   : "Breda/Tilburg";
  
-  const prompt = `Je bent een sales-strateeg voor YoungCapital ${vestiging}, een uitzend- en werving & selectiebureau gespecialiseerd in young professionals (MBO-WO starters). YoungCapital Breda en Tilburg bedienen lokale MKB-bedrijven in West-Brabant en Midden-Brabant.
+  const sectorTekst = {
+    "logistiek": "Logistiek & Magazijn",
+    "horeca": "Horeca",
+    "retail": "Retail",
+    "productie": "Productie / Maakindustrie",
+    "callcenter": "Callcenter / Klantenservice",
+    "zakelijk": "Zakelijke dienstverlening",
+    "it": "IT & Tech",
+    "marketing": "Marketing & Sales",
+    "bouw": "Bouw",
+    "zorg": "Zorg & Welzijn",
+    "finance": "Finance / Accounting",
+    "techniek": "Techniek",
+    "breed": "Breed inzetbaar"
+  }[k.voorkeur] || k.voorkeur;
  
-JE TAAK
-Identificeer ${aantal} ECHTE MKB-bedrijven in West-/Midden-Brabant die passen bij de kandidaat hieronder. Combineer twee kennisbronnen:
-1. **Web search** (2-4 zoekopdrachten) om recente vacatures, bedrijfsnieuws of groeisignalen te vinden
-2. **Je eigen training-kennis** over bekende MKB-bedrijven in West-Brabant en Midden-Brabant
+  const prompt = `Je bent een sales-strateeg voor YoungCapital ${vestiging}, een uitzend- en werving & selectiebureau gespecialiseerd in young professionals (MBO-WO starters). YoungCapital Breda en Tilburg bedienen lokale MKB-bedrijven (25-250 medewerkers) in West-Brabant en Midden-Brabant.
+ 
+Je hebt uit je training-kennis een rijk beeld van bekende, echt bestaande MKB-bedrijven in deze regio (Breda, Tilburg, Etten-Leur, Oosterhout, Roosendaal, Bergen op Zoom, Waalwijk, Oisterwijk, Goirle, Moerdijk, Dongen, etc.). Gebruik die kennis om de KDD te matchen.
  
 KANDIDAAT (KDD)
 - Voornaam: ${k.naam}
 - Niveau: ${k.niveau}
 - Opleiding: ${k.studie || "(onbekend)"}
-- Voorkeurssector: ${k.voorkeur}
+- Voorkeurssector: ${sectorTekst}
 - Beschikbaarheid: ${k.uren}
 - Werkervaring: ${k.ervaring}
 - Regio-voorkeur: ${k.regio || "geen specifieke voorkeur, heel West-/Midden-Brabant"}
 - Profiel/sterktes: ${k.sterk || "(niet ingevuld)"}
  
-WERKWIJZE
-1. Doe 2-4 gerichte web searches om bedrijven en sectorinfo in deze regio te vinden (bijv. "MKB ${k.voorkeur} Breda Tilburg", "${k.voorkeur} bedrijven West-Brabant vacatures", "${k.voorkeur} vacature ${k.niveau}").
-2. Combineer met je kennis van bestaande, bekende MKB-bedrijven in deze regio en sector. Echte voorbeelden uit West-/Midden-Brabant zijn er genoeg — denk aan namen die je kent van bedrijfslijsten, KvK, branche-organisaties.
-3. Selecteer ${aantal} bedrijven die echt bestaan en in West-/Midden-Brabant gevestigd zijn (Breda, Tilburg, Etten-Leur, Oosterhout, Roosendaal, Bergen op Zoom, Waalwijk, Oisterwijk, Goirle, Moerdijk e.d.).
-4. Per bedrijf: formuleer 1-2 plausibele openstaande vacatures op basis van wat zo'n bedrijf typisch zoekt, en 1-2 recente bedrijfsontwikkelingen op basis van wat je weet of hebt gevonden. Wees realistisch — geen fantasie, wel pragmatische inschatting.
-5. Sorteer de matches op score; hoogste eerst.
+JE TAAK
+Selecteer ${aantal} ECHTE MKB-bedrijven uit West-/Midden-Brabant die je kent en die passen bij deze KDD. Per bedrijf:
+1. Bedenk 1-2 plausibele openstaande vacatures op basis van wat zo'n bedrijf typisch zoekt op het niveau van de kandidaat.
+2. Formuleer 1-2 realistische bedrijfsontwikkelingen op basis van wat je weet over het bedrijf, hun sector, of algemene branche-trends.
+3. Genereer een matchscore (1.0-10.0), onderbouwing, gepersonaliseerde belopening (gebruik het bedrijfsnieuws als haakje), volledige outreach-mail en een vervolgstap.
  
-PRINCIPE
-Voor de outreach-content geldt: een plausibele, realistische inschatting is waardevoller dan een lege output. Wees transparant in de bron-vermelding (bijv. "op basis van branchekennis" of "volgens recente LinkedIn-post" naar gelang).
+LET OP
+- De bedrijven moeten ECHT bestaan (niet verzonnen) en in West-/Midden-Brabant gevestigd zijn.
+- Vacatures en nieuws zijn plausibele inschattingen op basis van branchekennis — vermeld dat in de bron als 'branchekennis' of 'algemene sectorkennis'. Wees daar transparant over.
+- Mix verschillende soorten bedrijven (verschillende steden, verschillende grootte binnen MKB) voor diversiteit.
+- Sorteer matches op score; hoogste eerst.
  
 OUTPUT
-Geef ALLEEN geldige JSON terug, GEEN markdown, GEEN uitleg eromheen, GEEN \`\`\` codeblokken.
+Geef ALLEEN geldige JSON terug. Geen markdown, geen \`\`\` codeblokken, geen tekst eromheen, geen verontschuldigingen.
  
 Format:
 {
   "topMatches": [
     {
-      "bedrijfsnaam": "Echte naam van het bedrijf",
+      "bedrijfsnaam": "Echte naam",
       "sector": "logistiek|horeca|retail|productie|callcenter|zakelijk|it|marketing|bouw|zorg|finance|techniek|anders",
-      "locatie": "Stadnaam in West-/Midden-Brabant",
+      "locatie": "Stad in West-/Midden-Brabant",
       "omvang": "klein|mkb|middelgroot|groot",
       "matchscore": 8.5,
       "vacatures": [
         {
-          "titel": "Concrete functietitel die je hebt gevonden",
+          "titel": "Plausibele functietitel",
           "niveau": "MBO|HBO|WO",
           "urgentie": "urgent|hoog|midden|laag",
-          "sinds": "indicatie hoe lang open, bijv. '2 weken' of 'recent'"
+          "sinds": "indicatie hoe lang open"
         }
       ],
       "recenteOntwikkelingen": [
         {
-          "tekst": "Korte beschrijving van het signaal/nieuws (zonder de bedrijfsnaam te herhalen aan het begin)",
+          "tekst": "Korte beschrijving van het signaal/nieuws",
           "type": "groei|investering|product|event",
-          "bron": "Korte verwijzing naar bron, bijv. 'LinkedIn-post' of 'persbericht via bedrijfssite'"
+          "bron": "branchekennis | algemene sectorkennis | specifiek bekend"
         }
       ],
       "onderbouwing": "2-4 zinnen waarom dit bedrijf past bij ${k.naam} voor YoungCapital ${vestiging}.",
-      "belopening": "Volledige openingszin voor cold call in het Nederlands. Begin met: 'Goedemorgen, u spreekt met [JOUW NAAM] van YoungCapital ${vestiging}.' Gebruik het recente nieuws als ijsbreker en koppel het aan ${k.naam}'s profiel en de vacature.",
+      "belopening": "Volledige openingszin voor cold call. Begin met: 'Goedemorgen, u spreekt met [JOUW NAAM] van YoungCapital ${vestiging}.' Gebruik het recente nieuws als ijsbreker en koppel het aan ${k.naam}'s profiel en de vacature.",
       "outreachMail": "Volledige zakelijke e-mail in het Nederlands. Begin met 'Onderwerp: ...' op de eerste regel, daarna een lege regel, daarna 'Beste relatiemanager,'. Gebruik [JOUW NAAM] en [telefoonnummer] | [e-mail] als placeholders. Body 4-6 zinnen die expliciet het recente nieuws EN de gevonden vacature noemen.",
-      "vervolgstap": "1-2 zinnen concrete actie voor de salesmedewerker, met duidelijke urgentie afhankelijk van de score en vacature-status."
+      "vervolgstap": "1-2 zinnen concrete actie voor de salesmedewerker."
     }
   ],
-  "samenvatting": "Eén zin: hoeveel bedrijven gevonden, hoeveel acute vacatures, regio-spreiding."
+  "samenvatting": "Eén zin: hoeveel bedrijven, regio-spreiding, type matches."
 }
  
-BELANGRIJK
-- Alle teksten in het Nederlands.
-- Bedrijven MOETEN echt bestaan en in West-/Midden-Brabant gevestigd zijn.
-- Vacatures: gebruik concrete info indien gevonden, anders een plausibele rol die past bij het bedrijfstype + niveau van de kandidaat. Zet urgentie op 'midden' of 'laag' als je het niet zeker weet.
-- Recent nieuws: gebruik wat je hebt gevonden, of een plausibele observatie over de sector/regio met bron-aanduiding "branchekennis" of "sectortrend".
-- Wees realistisch en zakelijk in de outreach — geen overdreven taal.
- 
 OUTPUT-DISCIPLINE — UITERST BELANGRIJK
-- LEVER ALTIJD JSON, ook als de zoekresultaten niet ideaal zijn. NOOIT excuses of uitleg in plaats van JSON.
-- Je eerste karakter MOET een { zijn.
-- Je laatste karakter MOET een } zijn.
-- Geen tekst vóór de {. Geen tekst na de }. Geen \`\`\`json. Geen markdown. Geen verontschuldigingen.
+- LEVER ALTIJD JSON. Nooit excuses, nooit uitleg, nooit markdown.
+- Eerste karakter MOET een { zijn. Laatste karakter MOET een } zijn.
 - Geen trailing comma's.
-- Als je twijfelt over een veld, gebruik dan een lege string "" of lege array [], maar lever altijd het complete object.
-- Lever minimaal ${aantal} bedrijven; vul aan met je training-kennis als web search te weinig oplevert.`;
+- Lever exact ${aantal} bedrijven.`;
  
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
  
     const message = await client.messages.create({
       model: "claude-sonnet-4-5",
-      max_tokens: 8000,
-      tools: [
-        {
-          type: "web_search_20250305",
-          name: "web_search",
-          max_uses: 4
-        }
-      ],
+      max_tokens: 6000,
       messages: [{ role: "user", content: prompt }]
     });
  
-    // Verzamel alle tekstcontent uit het antwoord
     let textContent = "";
     if (Array.isArray(message.content)) {
       for (const block of message.content) {
@@ -142,30 +140,24 @@ OUTPUT-DISCIPLINE — UITERST BELANGRIJK
       });
     }
  
-    // Probeer JSON-blok te isoleren — robuuster
     let jsonString = textContent.trim();
- 
-    // Verwijder eventuele markdown-codeblokken: ```json ... ``` of ``` ... ```
     jsonString = jsonString.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
  
-    // Pak het grootste {...}-blok
     const firstBrace = jsonString.indexOf("{");
     const lastBrace = jsonString.lastIndexOf("}");
     if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
       jsonString = jsonString.slice(firstBrace, lastBrace + 1);
     }
  
-    // Verwijder trailing commas (komen voor in LLM JSON-output)
     jsonString = jsonString.replace(/,(\s*[}\]])/g, "$1");
  
     let parsed;
     try {
       parsed = JSON.parse(jsonString);
     } catch (parseErr) {
-      // Stuur een korte sample mee zodat we kunnen zien wat Claude deed
-      const sample = textContent.slice(0, 600).replace(/\s+/g, " ");
+      const sample = textContent.slice(0, 400).replace(/\s+/g, " ");
       return res.status(502).json({
-        error: "Kon Claude's antwoord niet als JSON lezen. Probeer het opnieuw, of pas de zoekopdracht aan. (Antwoord begon met: " + sample + "...)"
+        error: "Kon Claude's antwoord niet als JSON lezen. (Antwoord begon met: " + sample + "...)"
       });
     }
  
@@ -182,9 +174,9 @@ OUTPUT-DISCIPLINE — UITERST BELANGRIJK
     let userMessage = "API-aanroep mislukt: " + (error.message || "onbekende fout");
  
     if (status === 401) {
-      userMessage = "API-key ongeldig. Controleer de ANTHROPIC_API_KEY in Vercel → Settings → Environment Variables.";
+      userMessage = "API-key ongeldig. Controleer de ANTHROPIC_API_KEY in Vercel.";
     } else if (status === 429) {
-      userMessage = "Te veel verzoeken of credits op. Top up bij https://console.anthropic.com → Plans & Billing.";
+      userMessage = "Te veel verzoeken of credits op. Top up bij console.anthropic.com.";
     } else if (status >= 500) {
       userMessage = "Anthropic-server tijdelijk niet bereikbaar. Probeer over een minuut opnieuw.";
     }

@@ -1,0 +1,16 @@
+{
+  "name": "yc-matchradar",
+  "version": "2.0.0",
+  "private": true,
+  "description": "YC MatchRadar — kandidaatgedreven sales-tool voor YoungCapital Breda/Tilburg",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

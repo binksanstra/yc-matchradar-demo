@@ -1,81 +1,63 @@
-# YC MatchRadar — afstudeerprototype
+# YC MatchRadar v2 — afstudeerprototype + live new business
 
-Een Nederlandstalig, frontend-only prototype voor **YoungCapital Breda / Tilburg** dat per kandidaat-bedrijf-combinatie een matchscore en outreach-content genereert. Volledig in de browser; geen API-key, geen backend, geen kosten.
+Een Nederlandstalige sales-tool voor **YoungCapital Breda / Tilburg** met **twee modi**:
 
-Ontworpen voor afstudeeronderzoek en live demo's: stabiel, voorspelbaar en professioneel ogend.
+1. **Demo-database** (gratis) — scant een ingebouwde set van 30+ representatieve MKB-bedrijven in West-/Midden-Brabant. Perfect voor presentatie en ontwikkeling. Geen API nodig.
+2. **Live new business** (API) — gebruikt Anthropic's Claude met web search om écht bestaande MKB-bedrijven (Breda/Tilburg) te vinden met openstaande vacatures, recente nieuws-updates en gepersonaliseerde outreach.
 
-## Wat de tool doet
+## Bestanden
 
-Op basis van een ingevuld **kandidaatprofiel** en **bedrijfsprofiel** genereert de tool:
+```
+yc-matchradar-demo/
+├── index.html            Frontend met modus-schakelaar
+├── api/
+│   └── findbusiness.js   Backend (Vercel serverless function) voor live mode
+├── package.json          Dependencies (Anthropic SDK)
+├── vercel.json           Vercel config
+└── README.md             Dit bestand
+```
 
-1. **Matchscore** (1.0 – 10.0) op basis van een gewogen scoringsmodel.
-2. **Onderbouwing** — waarom deze match wel/niet werkt voor YoungCapital Breda/Tilburg.
-3. **Persoonlijke belopening** — kant-en-klare openingszin voor een koud telefoongesprek.
-4. **Outreach-mail** — volledige zakelijke e-mail met onderwerpregel, klaar om te kopiëren.
-5. **Vervolgstap-advies** — concrete actie afhankelijk van de score.
+## Hoe de demo-modus werkt
 
-## Hoe het scoringmodel werkt (handig voor de scriptie)
+Zelfde als v1: een gewogen scoringsmodel met 8 factoren (sector, locatie, omvang, kandidaatfit, vacature-urgentie, niveau, recente activiteit, beschikbaarheid) tegen een ingebouwde fictieve database. Geen kosten, voorspelbaar, geschikt voor demo's.
 
-De score (max 10) wordt opgebouwd uit zes weegfactoren:
+## Hoe de live-modus werkt
 
-| Factor | Max punten | Wat wordt beoordeeld |
-|---|---|---|
-| Sector-potentieel YC | 25 | Hoe goed past de sector bij YoungCapital's portfolio (logistiek/callcenter scoren hoog, zorg lager). |
-| Locatie | 20 | Ligt het bedrijf in West-Brabant (Breda) of Midden-Brabant (Tilburg)? |
-| Bedrijfsomvang | 15 | MKB (25-100 medewerkers) is de sweet spot. |
-| Kandidaat-sectorfit | 20 | Sluit de voorkeur van de kandidaat aan op de bedrijfssector? |
-| Niveau-fit | 10 | Past het opleidingsniveau bij het type werk in deze sector? |
-| Beschikbaarheid + ervaring | 10 | Hoe inzetbaar is de kandidaat (uren + ervaringsniveau)? |
+1. Je vult de KDD in en kiest "Live new business" als modus.
+2. Frontend stuurt het kandidaatprofiel naar `/api/findbusiness` (Vercel serverless function).
+3. Die backend gebruikt jouw `ANTHROPIC_API_KEY` (veilig in Vercel's env vars) en roept Claude aan met de **web search tool**.
+4. Claude doet 4–8 web searches (LinkedIn, vacaturesites, bedrijfssites, nieuwsbronnen) om echte MKB-bedrijven te vinden met openstaande vacatures in West-/Midden-Brabant.
+5. Claude scoort de matches en genereert per bedrijf: onderbouwing, belopening, mail en vervolgstap, met verwijzing naar concrete vacatures en recent nieuws.
+6. Frontend toont de resultaten in dezelfde card-UI als demo-modus.
 
-Totaal van max 100 punten wordt gedeeld door 10 om op een 1-10 schaal te komen, met een minimum van 2.5 en maximum van 9.8 om realistische score-ranges te garanderen.
+**Kostenindicatie:** ~$0,10 – $0,30 per zoekopdracht. Met $5 aan credits doe je 15-50 zoekopdrachten.
 
-De tekstuele outputs (onderbouwing, belopening, mail, vervolgstap) worden gegenereerd uit dynamische templates die de specifieke input personaliseren — denk aan: bedrijfsnaam, kandidaatnaam, sector, locatie, regio en YC-vestiging worden allemaal doorgegeven aan de tekstgeneratie zodat elke output uniek voelt.
+## Vereisten voor live-modus
 
-## Lokaal uitproberen
-
-Open simpelweg `index.html` in een browser. Geen build-stap, geen install. Dubbelklik op het bestand en je bent er.
-
-## Online zetten via Vercel (gratis, 5 minuten)
-
-### Optie A: drag-and-drop (simpelst, geen account-setup)
-
-1. Ga naar https://vercel.com/new
-2. Maak een gratis account aan (kan met GitHub of e-mail)
-3. Klik op het tabje **"Deploy"** of zoek naar **"Drop your project files here"**
-4. Sleep de hele map `yc-matchradar-demo` (of alleen `index.html`) erin
-5. Klik op **Deploy**
-6. Klaar — je krijgt een URL zoals `https://yc-matchradar-demo.vercel.app`
-
-### Optie B: via GitHub (handig als je wijzigingen wilt blijven maken)
-
-1. Maak een GitHub-account op https://github.com/signup (gratis)
-2. Maak een nieuwe lege repository aan, bijvoorbeeld `yc-matchradar-demo`
-3. Klik op **"uploading an existing file"** en sleep `index.html` (en eventueel `README.md`) erin
-4. Klik op **"Commit changes"**
-5. Ga naar https://vercel.com → **"Add New" → "Project"** → kies je nieuwe repo
-6. Laat alle instellingen op standaard staan en klik op **Deploy**
-
-## Tips voor je presentatie
-
-- Gebruik de **drie voorbeeld-knoppen** bovenaan om snel realistische scenario's te demonstreren zonder live te hoeven typen.
-- De **Print/PDF-knop** rechtsonder maakt een nette PDF van het resultaat — handig voor je scriptie-bijlage.
-- De loading-animatie (~1.6 sec) maakt het bewust voelt als een AI-tool, zonder echt iets externs aan te roepen.
-- Je kunt elk veld aanpassen om edge cases te laten zien (bijv. een bedrijf in Eindhoven krijgt een lagere locatie-score).
-
-## Aanpassen
-
-Alle logica zit in de `<script>` aan het einde van `index.html`. De interessante plekken om iets te tweaken:
-
-- `SECTOREN`, `LOCATIES`, `OMVANG_SCORE`: stel de scoring-tabellen bij naar jouw bevindingen.
-- `VOORBEELDEN`: pas de drie demo-scenario's aan met cases die voor jouw scriptie relevanter zijn.
-- `genereerOnderbouwing`, `genereerBelopening`, `genereerMail`, `genereerVervolgstap`: hier verander je de tekstuele templates.
+- Anthropic-account met betaalmiddel (creditcard of debetkaart, bijv. via Revolut / bunq werkt prima)
+- Minimaal $5 prepaid credits opgeladen via console.anthropic.com → Plans & Billing
+- API-key uit console.anthropic.com → API Keys
+- API-key in Vercel als environment variable: `ANTHROPIC_API_KEY`
 
 ## Verantwoording (voor je scriptie)
 
-Dit prototype simuleert een AI-tool zonder daadwerkelijk een large language model aan te roepen. De keuze is bewust:
+Het prototype is in twee versies gebouwd om beide kanten van het concept te illustreren:
 
-- **Voorspelbaarheid:** identieke input geeft identieke output, cruciaal voor demonstraties en validatie van het concept.
-- **Geen externe afhankelijkheden:** geen API-keys, geen kosten, geen risico op service-uitval tijdens de presentatie.
-- **Transparante scoring:** de wegingsfactoren zijn expliciet en uitlegbaar — een belangrijk voordeel boven een black-box AI als het gaat om reproduceerbaarheid.
+- **Demo-modus** simuleert een werkende AI-tool met een rule-based matchingmodel en gegenereerde outreach via templates. Voorspelbaar, transparant, geschikt voor concept-validatie.
+- **Live-modus** toont de productieversie waarin Claude (Anthropic's LLM) met web search live data ophaalt om echte bedrijven en vacatures te identificeren. Bewijst dat de architectuur schaalbaar is naar daadwerkelijk gebruik.
 
-Voor een productieversie zou de tekstgeneratie eventueel ondersteund kunnen worden door een large language model (zoals Anthropic's Claude of OpenAI's GPT), met de huidige scoringslogica als input/grounding. Dat valt buiten de scope van dit prototype.
+In de scriptie kun je de scoringslogica uit demo-modus uitleggen en met live-modus laten zien hoe het in productie zou werken voor échte sales op echte prospects.
+
+## Aanpassen
+
+- `BEDRIJVEN_DATABASE` in `index.html`: pas de fictieve demo-bedrijven aan.
+- `prompt` in `api/findbusiness.js`: verfijn wat Claude moet zoeken in live-modus.
+- `tools[].max_uses` in `api/findbusiness.js`: lager = sneller en goedkoper, hoger = grondiger maar duurder.
+- Scoringsfactoren in `berekenMatch()`: stel weegfactoren bij naar jouw bevindingen.
+
+## Tips voor je presentatie
+
+- Begin in demo-modus om de score-berekening en outputs te tonen.
+- Switch dan naar live-modus om in real-time echte bedrijven op te zoeken — sterke "wow"-moment voor je verdediging.
+- Op live-modus: wacht ongeveer 30-60 seconden terwijl Claude het web doorzoekt. De loading-animatie laat de stappen zien.
+- De "Print"-knop maakt een nette PDF van het resultaat voor je scriptie-bijlage.

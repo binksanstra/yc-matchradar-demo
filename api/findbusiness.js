@@ -48,9 +48,7 @@ export default async function handler(req, res) {
     "breed": "Breed inzetbaar"
   }[k.voorkeur] || k.voorkeur;
  
-  const prompt = `Je bent een sales-strateeg voor YoungCapital ${vestiging}, een uitzend- en werving & selectiebureau gespecialiseerd in young professionals (MBO-WO starters). YoungCapital Breda en Tilburg bedienen lokale MKB-bedrijven (25-250 medewerkers) in West-Brabant en Midden-Brabant.
- 
-Je hebt uit je training-kennis een rijk beeld van bekende, echt bestaande MKB-bedrijven in deze regio (Breda, Tilburg, Etten-Leur, Oosterhout, Roosendaal, Bergen op Zoom, Waalwijk, Oisterwijk, Goirle, Moerdijk, Dongen, etc.). Gebruik die kennis om de KDD te matchen.
+  const prompt = `Je bent een sales-strateeg voor YoungCapital ${vestiging}, een uitzend- en werving & selectiebureau gespecialiseerd in young professionals (MBO-WO starters). YoungCapital Breda en Tilburg bedienen lokale MKB-bedrijven in West-Brabant en Midden-Brabant.
  
 KANDIDAAT (KDD)
 - Voornaam: ${k.naam}
@@ -62,17 +60,32 @@ KANDIDAAT (KDD)
 - Regio-voorkeur: ${k.regio || "geen specifieke voorkeur, heel West-/Midden-Brabant"}
 - Profiel/sterktes: ${k.sterk || "(niet ingevuld)"}
  
-JE TAAK
-Selecteer ${aantal} ECHTE MKB-bedrijven uit West-/Midden-Brabant die je kent en die passen bij deze KDD. Per bedrijf:
-1. Bedenk 1-2 plausibele openstaande vacatures op basis van wat zo'n bedrijf typisch zoekt op het niveau van de kandidaat.
-2. Formuleer 1-2 realistische bedrijfsontwikkelingen op basis van wat je weet over het bedrijf, hun sector, of algemene branche-trends.
-3. Genereer een matchscore (1.0-10.0), onderbouwing, gepersonaliseerde belopening (gebruik het bedrijfsnieuws als haakje), volledige outreach-mail en een vervolgstap.
+KRITIEKE CRITERIA — ALLEEN ECHTE LOKALE MKB
+Een geldig bedrijf voor deze tool voldoet aan ALLE volgende voorwaarden:
+1. **Hoofdkantoor** staat in West-/Midden-Brabant (Breda, Tilburg, Etten-Leur, Oosterhout, Roosendaal, Bergen op Zoom, Waalwijk, Oisterwijk, Goirle, Moerdijk, Dongen, Gilze-Rijen, Loon op Zand, Geertruidenberg, Drimmelen, Zundert, Rucphen).
+2. **Bedrijfsgrootte: 25-250 medewerkers totaal** (echt MKB; niet ZZP/microbedrijf en niet corporate).
+3. **Geen multinational, geen beursgenoteerd, geen bekende landelijke keten/franchise**.
+4. **Geen filiaal of vestiging** van een bedrijf met hoofdkantoor elders (bijv. niet Coolblue Tilburg-vestiging — hun HQ is in Rotterdam).
+5. Bij voorkeur **familie- of regionale MKB-bedrijven** met sterke lokale verankering.
  
-LET OP
-- De bedrijven moeten ECHT bestaan (niet verzonnen) en in West-/Midden-Brabant gevestigd zijn.
-- Vacatures en nieuws zijn plausibele inschattingen op basis van branchekennis — vermeld dat in de bron als 'branchekennis' of 'algemene sectorkennis'. Wees daar transparant over.
-- Mix verschillende soorten bedrijven (verschillende steden, verschillende grootte binnen MKB) voor diversiteit.
-- Sorteer matches op score; hoogste eerst.
+VOORBEELDEN VAN BEDRIJVEN DIE JE WÉL MAG KIEZEN
+Lokale familiebedrijven in installatie, bouw, groothandel, transport, maakindustrie, zakelijke dienstverlening, regionale aannemers, lokale productiebedrijven, regionale uitgeverijen, lokale IT-dienstverleners, regionale accountantskantoren, lokale agencies — bedrijven die het lokale MKB-landschap typeren.
+ 
+VOORBEELDEN OM TE VERMIJDEN (zelfs als ze 'in Breda/Tilburg' zitten)
+- Bavaria (te groot, > 250 medewerkers)
+- Coolblue, Bol.com (corporate)
+- Jumbo, Albert Heijn, Lidl, McDonalds (landelijke ketens / franchise)
+- Royal HaskoningDHV, Fontys, Avans (te groot of onderwijs)
+- ASR, Achmea, ING-vestigingen (corporate, HQ elders)
+- Internationale logistieke giants (geen MKB)
+ 
+WERKWIJZE
+1. Selecteer ${aantal} bedrijven die je MET ZEKERHEID kent als echt bestaande, lokaal verankerde MKB-bedrijven in deze regio.
+2. Als je twijfelt over een bedrijf (grootte, locatie HQ, of het echt bestaat), KIES HET DAN NIET. Liever ${Math.max(2, aantal-2)} sterke matches dan ${aantal} matige.
+3. Per bedrijf:
+   - Vacatures: formuleer rollen die dit type bedrijf typisch periodiek werft, met label "Typische rol — periodieke werving" (want zonder live data weet je niet of er nu echt iets openstaat)
+   - Recente ontwikkelingen: alleen vermelden als je een feit MET REDELIJKE ZEKERHEID kent over dit specifieke bedrijf, of een sectortrend die voor dit bedrijfstype geldt. Bron transparant labelen.
+4. Genereer matchscore (1.0-10.0), onderbouwing, belopening, outreach-mail en vervolgstap.
  
 OUTPUT
 Geef ALLEEN geldige JSON terug. Geen markdown, geen \`\`\` codeblokken, geen tekst eromheen, geen verontschuldigingen.
@@ -88,17 +101,17 @@ Format:
       "matchscore": 8.5,
       "vacatures": [
         {
-          "titel": "Plausibele functietitel",
+          "titel": "Typische rol die dit bedrijf periodiek werft",
           "niveau": "MBO|HBO|WO",
-          "urgentie": "urgent|hoog|midden|laag",
-          "sinds": "indicatie hoe lang open"
+          "urgentie": "midden|laag",
+          "sinds": "doorlopende werving"
         }
       ],
       "recenteOntwikkelingen": [
         {
-          "tekst": "Korte beschrijving van het signaal/nieuws",
+          "tekst": "Korte beschrijving van een sectortrend of bekend feit over dit bedrijf",
           "type": "groei|investering|product|event",
-          "bron": "branchekennis | algemene sectorkennis | specifiek bekend"
+          "bron": "branchekennis | sectortrend | bekend bedrijfsfeit"
         }
       ],
       "onderbouwing": "2-4 zinnen waarom dit bedrijf past bij ${k.naam} voor YoungCapital ${vestiging}.",
@@ -114,7 +127,8 @@ OUTPUT-DISCIPLINE — UITERST BELANGRIJK
 - LEVER ALTIJD JSON. Nooit excuses, nooit uitleg, nooit markdown.
 - Eerste karakter MOET een { zijn. Laatste karakter MOET een } zijn.
 - Geen trailing comma's.
-- Lever exact ${aantal} bedrijven.`;
+- Lever 2 tot ${aantal} bedrijven (liever minder maar zekerder).
+- In de outreach-mail en belopening: frame vacatures als "ik begreep dat u regelmatig werft voor [rol]" of "voor het type rol waar uw bedrijf in de regel mensen voor zoekt", NIET als "uw openstaande vacature voor X" (want dat kun je niet bewijzen).`;
  
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });

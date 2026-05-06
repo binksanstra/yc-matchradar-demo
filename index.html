@@ -374,6 +374,59 @@
       border: 1px solid var(--border-strong);
     }
 
+    /* AI-VERFIJNING TOGGLE */
+    .ai-toggle {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 16px;
+      background: var(--blue-bg);
+      border: 1px solid #93c5fd;
+      border-radius: 10px;
+      margin-top: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .ai-toggle:hover { border-color: var(--blue); }
+    .ai-toggle input[type="checkbox"] {
+      width: auto; margin: 3px 0 0 0; cursor: pointer; flex-shrink: 0;
+    }
+    .ai-toggle .toggle-label {
+      display: flex; flex-direction: column; flex: 1;
+      font-size: 13px;
+    }
+    .ai-toggle .toggle-title {
+      font-weight: 700; color: var(--blue);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ai-toggle .toggle-badge {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+      background: var(--blue); color: white;
+      padding: 2px 6px; border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .ai-toggle .toggle-sub {
+      color: var(--muted); font-size: 12px; margin-top: 4px;
+      line-height: 1.5;
+    }
+    .ai-onderbouwing {
+      background: var(--blue-bg);
+      border: 1px solid #93c5fd;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+    .ai-onderbouwing .ai-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+      color: var(--blue); text-transform: uppercase;
+      display: inline-block; margin-bottom: 6px;
+      background: white; padding: 2px 8px; border-radius: 4px;
+      border: 1px solid #93c5fd;
+    }
+    .ai-onderbouwing .kernreden {
+      font-weight: 600; color: var(--text);
+      display: block; margin-bottom: 4px;
+    }
+
     /* FOOTER */
     footer {
       max-width: 1100px; margin: 40px auto 0;
@@ -654,6 +707,14 @@
         <div id="prospectList"></div>
         <button type="button" class="add-pool-btn" id="toggleAddProspect">+ Bedrijf toevoegen</button>
 
+        <label class="ai-toggle">
+          <input type="checkbox" id="useAiProspects" />
+          <span class="toggle-label">
+            <span class="toggle-title">AI-verfijning gebruiken <span class="toggle-badge">AI</span></span>
+            <span class="toggle-sub">Claude leest de notities + sterktes van de KDD semantisch en herrangschikt op basis van concrete praktijkervaring (bijv. eerder verkoopwerk, callcenter ervaring). Duurt 5-10 sec extra en kost ~$0,02 per analyse.</span>
+          </span>
+        </label>
+
         <div id="addProspectForm" class="hidden">
           <div class="pool-form-inner">
             <h4 id="addProspectTitle">Nieuw bedrijf toevoegen</h4>
@@ -748,6 +809,14 @@
         <p class="card-sub"><strong id="candidateCount">0</strong> kandidaten opgeslagen in je browser.</p>
         <div id="candidateList"></div>
         <button type="button" class="add-pool-btn" id="toggleAddCandidate">+ Kandidaat toevoegen</button>
+
+        <label class="ai-toggle">
+          <input type="checkbox" id="useAiCandidates" />
+          <span class="toggle-label">
+            <span class="toggle-title">AI-verfijning gebruiken <span class="toggle-badge">AI</span></span>
+            <span class="toggle-sub">Claude leest de notities + sterktes van elke kandidaat semantisch en herrangschikt op basis van concrete praktijkervaring relevant voor de rol bij dit bedrijf. Duurt 5-10 sec extra en kost ~$0,02 per analyse.</span>
+          </span>
+        </label>
 
         <div id="addCandidateForm" class="hidden">
           <div class="pool-form-inner">
@@ -1522,6 +1591,9 @@
     const belopening = genereerBelopening(k, b, m);
     const mail = genereerMail(k, b, m);
     const vervolgstap = genereerVervolgstap(k, b, m);
+    const aiBlok = matchObj.aiOnderbouwing
+      ? `<div class="output-block"><h4>AI-onderbouwing</h4><div class="ai-onderbouwing"><span class="ai-label">★ AI-verfijnd</span>${matchObj.aiKernreden ? `<span class="kernreden">${escapeHtml(matchObj.aiKernreden)}</span>` : ""}<div>${escapeHtml(matchObj.aiOnderbouwing)}</div></div></div>`
+      : "";
     const heeftUrgent = (b.vacatures || []).some(v => v.urgentie === "urgent") && m.isVacatureFit;
     const subText = heeftUrgent
       ? `${escapeHtml(sectorLabel)} · ${escapeHtml(b.locatie)} · <span class="urgency-tag urgency-urgent">URGENTE VACATURE</span>`
@@ -1546,6 +1618,7 @@
           <div class="chevron">▼</div>
         </div>
         <div class="result-details">
+          ${aiBlok}
           <div class="output-block"><h4>Onderbouwing</h4><div class="output-text">${escapeHtml(onderbouwing)}</div></div>
           <div class="output-block"><h4>Openstaande vacatures</h4>${vacaturesHtml}</div>
           <div class="output-block"><h4>Recente bedrijfsontwikkelingen</h4>${nieuwsHtml}</div>
@@ -1556,7 +1629,7 @@
       </div>`;
   }
 
-  function maakKandidaatCard(c, b, score, rank, autoOpen) {
+  function maakKandidaatCard(c, b, score, rank, autoOpen, aiOnderbouwing, aiKernreden) {
     const lbl = bepaalLabel(score);
     const id = "card-" + rank;
     const expandedClass = autoOpen ? " expanded" : "";
@@ -1564,6 +1637,9 @@
     const onderbouwing = genereerKandidaatOnderbouwing(c, b, m);
     const pitch = genereerKandidaatPitch(c, b);
     const vervolgstap = genereerKandidaatVervolgstap(c, b, score);
+    const aiBlok = aiOnderbouwing
+      ? `<div class="output-block"><h4>AI-onderbouwing</h4><div class="ai-onderbouwing"><span class="ai-label">★ AI-verfijnd</span>${aiKernreden ? `<span class="kernreden">${escapeHtml(aiKernreden)}</span>` : ""}<div>${escapeHtml(aiOnderbouwing)}</div></div></div>`
+      : "";
     return `
       <div class="result-card${expandedClass}" id="${id}">
         <div class="result-header" data-toggle="${id}">
@@ -1577,6 +1653,7 @@
           <div class="chevron">▼</div>
         </div>
         <div class="result-details">
+          ${aiBlok}
           <div class="output-block"><h4>Onderbouwing</h4><div class="output-text">${escapeHtml(onderbouwing)}</div></div>
           <div class="output-block"><h4>Pitch om voor te stellen</h4><div class="output-text" id="${id}-pitch">${escapeHtml(pitch)}</div><button type="button" class="copy-btn" data-copy="${id}-pitch">Kopieer</button></div>
           <div class="output-block"><h4>Aanbevolen vervolgstap</h4><div class="output-text vervolg">${escapeHtml(vervolgstap)}</div></div>
@@ -1611,6 +1688,24 @@
       const interval = setInterval(() => { i = (i + 1) % stappen.length; msg.textContent = stappen[i]; }, 380);
       setTimeout(() => { clearInterval(interval); resolve(); }, durationMs);
     });
+  }
+
+  // Voor AI-flows: start cycling messages zonder vaste duur, stop handmatig
+  let _loadingInterval = null;
+  function startLoadingMessages(stappen) {
+    $("results").classList.add("hidden");
+    $("loading").classList.remove("hidden");
+    $("submitBtn").disabled = true;
+    const msg = $("loading-msg");
+    let i = 0; msg.textContent = stappen[0];
+    if (_loadingInterval) clearInterval(_loadingInterval);
+    _loadingInterval = setInterval(() => {
+      i = (i + 1) % stappen.length;
+      msg.textContent = stappen[i];
+    }, 600);
+  }
+  function stopLoadingMessages() {
+    if (_loadingInterval) { clearInterval(_loadingInterval); _loadingInterval = null; }
   }
 
   async function genereerDb() {
@@ -1648,6 +1743,17 @@
     setTimeout(() => $("results").scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   }
 
+  async function callRerank(payload) {
+    const res = await fetch("/api/rerank", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "AI-verfijning mislukt");
+    return data.ranked || [];
+  }
+
   async function genereerProspects() {
     verbergError();
     const k = leesKDD();
@@ -1655,12 +1761,59 @@
     if (fouten.length) { toonError(fouten.join(" ")); return; }
     const list = loadStorage(PROSPECT_KEY);
     if (list.length === 0) { toonError("Voeg eerst minimaal één bedrijf toe aan je bedrijfslijst."); return; }
-    await showLoading(["Bedrijfslijst analyseren...", "Matchscore per bedrijf berekenen...", "Outreach genereren..."]);
 
-    const matches = list.map(b => ({ bedrijf: b, match: berekenMatch(k, b, k.regio) })).sort((a, b) => b.match.score - a.match.score).slice(0, k.aantal);
+    const useAi = $("useAiProspects") && $("useAiProspects").checked;
 
-    $("r-title").textContent = `Top ${matches.length} bedrijven voor ${k.naam} (uit jouw lijst)`;
-    $("r-subtitle").textContent = `Gerangschikt op match met deze KDD. Bron: jouw eigen ingevoerde bedrijfslijst.`;
+    if (useAi) {
+      startLoadingMessages(["Bedrijfslijst analyseren...", "Rule-based scoring uitvoeren...", "AI-verfijning starten...", "Claude leest notities, opleiding en ervaring...", "Concrete praktijkervaring vergelijken met rol...", "Top matches herrangschikken..."]);
+    } else {
+      await showLoading(["Bedrijfslijst analyseren...", "Matchscore per bedrijf berekenen...", "Outreach genereren..."], 1600);
+    }
+
+    let matches = list.map(b => ({ bedrijf: b, match: berekenMatch(k, b, k.regio) }))
+      .sort((a, b) => b.match.score - a.match.score)
+      .slice(0, k.aantal);
+
+    let aiUsed = false;
+    if (useAi && matches.length > 0) {
+      try {
+        const items = matches.map(m => ({
+          naam: m.bedrijf.naam,
+          sector: m.bedrijf.sector,
+          locatie: m.bedrijf.locatie,
+          omvang: m.bedrijf.omvang,
+          vacatures: m.bedrijf.vacatures || [],
+          nieuws: m.bedrijf.nieuws || []
+        }));
+        const ranked = await callRerank({
+          mode: "kandidaat-bedrijven",
+          kandidaat: k,
+          items
+        });
+        if (ranked && ranked.length > 0) {
+          const reordered = ranked.map(r => {
+            const orig = matches[r.id];
+            if (!orig) return null;
+            return {
+              ...orig,
+              match: { ...orig.match, score: parseFloat(r.score) || orig.match.score },
+              aiOnderbouwing: r.onderbouwing || "",
+              aiKernreden: r.kernreden || ""
+            };
+          }).filter(x => x);
+          if (reordered.length > 0) { matches = reordered; aiUsed = true; }
+        }
+      } catch (err) {
+        toonError("AI-verfijning niet beschikbaar — toont rule-based ranking. (" + err.message + ")");
+      } finally {
+        stopLoadingMessages();
+      }
+    }
+
+    $("r-title").textContent = `Top ${matches.length} bedrijven voor ${k.naam}${aiUsed ? " (AI-verfijnd)" : ""}`;
+    $("r-subtitle").textContent = aiUsed
+      ? "Gerangschikt door Claude op basis van semantische analyse van notities, opleiding en concrete ervaring."
+      : "Gerangschikt op rule-based match met deze KDD.";
     $("r-stat-1").textContent = list.length; $("r-stat-1-label").textContent = "Bedrijven in jouw lijst";
     $("r-stat-2").textContent = matches.length; $("r-stat-2-label").textContent = "Geretourneerd in top";
     $("r-stat-3").textContent = matches.filter(m => m.match.score >= 8).length; $("r-stat-3-label").textContent = "Sterke matches (≥ 8)";
@@ -1680,21 +1833,68 @@
     if (fouten.length) { toonError(fouten.join(" ")); return; }
     const list = loadStorage(CANDIDATE_KEY);
     if (list.length === 0) { toonError("Voeg eerst minimaal één kandidaat toe aan je kandidatenlijst."); return; }
-    await showLoading(["Bedrijfsprofiel analyseren...", "Kandidaten matchen aan rol...", "Top kandidaten ranken..."]);
 
-    const scored = list.map(c => {
+    const useAi = $("useAiCandidates") && $("useAiCandidates").checked;
+
+    if (useAi) {
+      startLoadingMessages(["Bedrijfsprofiel analyseren...", "Rule-based scoring uitvoeren...", "AI-verfijning starten...", "Claude leest notities + concrete ervaring per kandidaat...", "Match-fit met specifieke rol bepalen...", "Top kandidaten herrangschikken..."]);
+    } else {
+      await showLoading(["Bedrijfsprofiel analyseren...", "Kandidaten matchen aan rol...", "Top kandidaten ranken..."], 1600);
+    }
+
+    let scored = list.map(c => {
       const m = berekenKandidaatMatch(c, b);
       return { kandidaat: c, score: m.score };
-    }).sort((a, b) => b.score - a.score).slice(0, b.aantal);
+    }).sort((a, x) => x.score - a.score).slice(0, b.aantal);
 
-    $("r-title").textContent = `Top ${scored.length} kandidaten voor ${b.naam}`;
-    $("r-subtitle").textContent = `Gerangschikt op kandidaatfit voor ${b.functie || "deze rol"}.`;
+    let aiUsed = false;
+    if (useAi && scored.length > 0) {
+      try {
+        const items = scored.map(s => ({
+          naam: s.kandidaat.naam,
+          niveau: s.kandidaat.niveau,
+          studie: s.kandidaat.studie,
+          woonplaats: s.kandidaat.woonplaats,
+          voorkeur: s.kandidaat.voorkeur,
+          uren: s.kandidaat.uren,
+          ervaring: s.kandidaat.ervaring,
+          notities: s.kandidaat.notities
+        }));
+        const ranked = await callRerank({
+          mode: "bedrijf-kandidaten",
+          bedrijf: b,
+          items
+        });
+        if (ranked && ranked.length > 0) {
+          const reordered = ranked.map(r => {
+            const orig = scored[r.id];
+            if (!orig) return null;
+            return {
+              kandidaat: orig.kandidaat,
+              score: parseFloat(r.score) || orig.score,
+              aiOnderbouwing: r.onderbouwing || "",
+              aiKernreden: r.kernreden || ""
+            };
+          }).filter(x => x);
+          if (reordered.length > 0) { scored = reordered; aiUsed = true; }
+        }
+      } catch (err) {
+        toonError("AI-verfijning niet beschikbaar — toont rule-based ranking. (" + err.message + ")");
+      } finally {
+        stopLoadingMessages();
+      }
+    }
+
+    $("r-title").textContent = `Top ${scored.length} kandidaten voor ${b.naam}${aiUsed ? " (AI-verfijnd)" : ""}`;
+    $("r-subtitle").textContent = aiUsed
+      ? `Gerangschikt door Claude op basis van semantische analyse van notities + concrete praktijkervaring per kandidaat.`
+      : `Gerangschikt op kandidaatfit voor ${b.functie || "deze rol"}.`;
     $("r-stat-1").textContent = list.length; $("r-stat-1-label").textContent = "Kandidaten in jouw lijst";
     $("r-stat-2").textContent = scored.length; $("r-stat-2-label").textContent = "Geretourneerd in top";
     $("r-stat-3").textContent = scored.filter(s => s.score >= 8).length; $("r-stat-3-label").textContent = "Sterke matches (≥ 8)";
     const sectLabel = (SECTOREN[b.sector] || SECTOREN.anders).label;
     $("r-recap").innerHTML = `<strong>${escapeHtml(b.naam)}</strong> · ${escapeHtml(sectLabel)} · ${escapeHtml(b.locatie)} · ${escapeHtml(OMVANG_KORT[b.omvang] || b.omvang)}${b.functie ? " · zoekt: " + escapeHtml(b.functie) + " (" + escapeHtml(b.niveau) + ")" : ""}`;
-    $("r-list").innerHTML = scored.map((s, i) => maakKandidaatCard(s.kandidaat, b, s.score, i + 1, i === 0)).join("");
+    $("r-list").innerHTML = scored.map((s, i) => maakKandidaatCard(s.kandidaat, b, s.score, i + 1, i === 0, s.aiOnderbouwing, s.aiKernreden)).join("");
     bindResultEvents();
     $("loading").classList.add("hidden"); $("results").classList.remove("hidden"); $("submitBtn").disabled = false;
     setTimeout(() => $("results").scrollIntoView({ behavior: "smooth", block: "start" }), 80);

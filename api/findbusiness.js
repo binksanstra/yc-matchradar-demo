@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({
-      error: "Configuratiefout: ANTHROPIC_API_KEY ontbreekt. Voeg deze toe in Vercel → Settings → Environment Variables."
+      error: "Configuratiefout: AI-service is niet beschikbaar. Neem contact op met de beheerder."
     });
   }
 
@@ -166,7 +166,7 @@ OUTPUT-DISCIPLINE — UITERST BELANGRIJK
 
     if (!textContent.trim()) {
       return res.status(502).json({
-        error: "Leeg antwoord van Claude. Probeer het opnieuw."
+        error: "Leeg antwoord van de AI-service. Probeer het opnieuw."
       });
     }
 
@@ -187,7 +187,7 @@ OUTPUT-DISCIPLINE — UITERST BELANGRIJK
     } catch (parseErr) {
       const sample = textContent.slice(0, 400).replace(/\s+/g, " ");
       return res.status(502).json({
-        error: "Kon Claude's antwoord niet als JSON lezen. (Antwoord begon met: " + sample + "...)"
+        error: "Kon het AI-antwoord niet als JSON lezen. (Antwoord begon met: " + sample + "...)"
       });
     }
 
@@ -204,11 +204,11 @@ OUTPUT-DISCIPLINE — UITERST BELANGRIJK
     let userMessage = "API-aanroep mislukt: " + (error.message || "onbekende fout");
 
     if (status === 401) {
-      userMessage = "API-key ongeldig. Controleer de ANTHROPIC_API_KEY in Vercel.";
+      userMessage = "AI-service authenticatie mislukt. Neem contact op met de beheerder.";
     } else if (status === 429) {
-      userMessage = "Te veel verzoeken of credits op. Top up bij console.anthropic.com.";
+      userMessage = "Te veel verzoeken op dit moment. Probeer het later opnieuw.";
     } else if (status >= 500) {
-      userMessage = "Anthropic-server tijdelijk niet bereikbaar. Probeer over een minuut opnieuw.";
+      userMessage = "AI-service tijdelijk niet bereikbaar. Probeer over een minuut opnieuw.";
     }
 
     return res.status(status).json({ error: userMessage });

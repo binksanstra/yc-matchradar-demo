@@ -210,6 +210,23 @@
     .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
     .recap-row { margin-top: 12px; padding: 10px 14px; background: white; border-radius: 10px; font-size: 13px; border: 1px solid var(--border); }
     .recap-row strong { color: var(--yc-orange-dark); }
+    .score-explainer {
+      margin-top: 12px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 12px;
+    }
+    .score-explainer summary {
+      cursor: pointer; font-weight: 600;
+      color: var(--yc-orange-dark);
+      padding: 4px 0;
+      user-select: none;
+    }
+    .score-explainer summary:hover { color: var(--yc-orange); }
+    .score-explainer ul { margin: 10px 0 4px; padding-left: 20px; line-height: 1.7; color: var(--text); }
+    .score-explainer li strong { color: var(--yc-orange-dark); }
 
     /* RESULT CARDS */
     .result-card {
@@ -481,35 +498,38 @@
         <span class="mode-sub">Één kandidaat, eigen bedrijfslijst</span>
       </button>
       <button type="button" class="mode-btn" data-mode="live">
-        Live AI-zoek
-        <span class="mode-sub">Anthropic API · in ontwikkeling</span>
+        AI-verkenning
+        <span class="mode-sub">Nieuwe bedrijven · experimenteel</span>
       </button>
     </div>
 
     <!-- BANNERS PER MODUS -->
     <div class="info-banner" id="bannerDb">
-      Vul de KDD in en de tool ranked passende bedrijven uit een vooringeladen lijst van MKB-bedrijven in West-/Midden-Brabant.
+      <strong>Product-markt-combinaties:</strong> kies een profieltype (PMC) of vul een specifieke KDD in. De tool koppelt het profiel aan passende lokale MKB-bedrijven gesegmenteerd op sector, locatie en vacaturetype — met focus op vertrouwen via lokale relatieopbouw.
     </div>
     <div class="info-banner hidden" id="bannerBedrijf">
-      Voer een bedrijf in én een lijst kandidaten uit jouw netwerk. De tool ranked welke kandidaten het beste passen bij dit bedrijf.
+      <strong>Bedrijf-eerst aanpak:</strong> voer het bedrijf met de gestructureerde vragenlijst in én een lijst kandidaten uit jouw netwerk. De tool ranked welke kandidaten het beste passen bij dit bedrijf en specifieke rol.
     </div>
     <div class="info-banner hidden" id="bannerProspects">
-      Voer een KDD in én een lijst eigen bedrijven (uit KvK / LinkedIn / je netwerk). De tool ranked welke bedrijven het beste passen bij deze kandidaat.
+      <strong>Kandidaatgedreven aanpak:</strong> voer een KDD in én een lijst eigen bedrijven (uit KvK / LinkedIn / netwerk). De tool ranked welke lokale MKB-bedrijven het beste passen bij deze kandidaat — sluit aan op de vertrouwens-as in commerciële relatieopbouw.
     </div>
     <div class="live-warning hidden" id="bannerLive">
-      <strong>Live AI-zoek:</strong> Claude (Anthropic) zoekt zelfstandig MKB-bedrijven in West-/Midden-Brabant op basis van getrainde kennis. Resultaten zijn niet altijd 100% verifieerbaar — bedoeld als startpunt voor verkenning.
+      <strong>AI-verkenning:</strong> het systeem zoekt zelfstandig MKB-bedrijven in West-/Midden-Brabant op basis van getrainde kennis. Resultaten zijn niet altijd 100% verifieerbaar — bedoeld als startpunt voor verkenning.
     </div>
 
     <div id="errorBox" class="error-box hidden"></div>
 
     <!-- TOOLBAR (alleen voor DB-modus en Live-modus) -->
     <div class="toolbar" id="toolbarDb">
-      <span class="toolbar-label">Voorbeeld-kandidaten:</span>
-      <button class="chip" data-example="logistiek">Tom · MBO Logistiek</button>
-      <button class="chip" data-example="marketing">Sanne · HBO Marketing</button>
-      <button class="chip" data-example="zorg">Lisa · HBO Verpleegkunde</button>
-      <button class="chip" data-example="it">Daan · WO Informatica</button>
-      <button class="chip danger" id="resetKddBtn">Wis kandidaat</button>
+      <span class="toolbar-label">PMC-presets:</span>
+      <button class="chip" data-example="logistiek">Logistiek MBO</button>
+      <button class="chip" data-example="productie">Productie MBO</button>
+      <button class="chip" data-example="marketing">Marketing &amp; Sales HBO</button>
+      <button class="chip" data-example="administratie">Administratie HBO</button>
+      <button class="chip" data-example="accountmanagement">Accountmanagement HBO</button>
+      <button class="chip" data-example="zorg">Zorg HBO</button>
+      <button class="chip" data-example="it">IT WO</button>
+      <button class="chip danger" id="resetKddBtn">Wis</button>
     </div>
 
     <!-- ====================================================================
@@ -711,7 +731,7 @@
           <input type="checkbox" id="useAiProspects" />
           <span class="toggle-label">
             <span class="toggle-title">AI-verfijning gebruiken <span class="toggle-badge">AI</span></span>
-            <span class="toggle-sub">Claude leest de notities + sterktes van de KDD semantisch en herrangschikt op basis van concrete praktijkervaring (bijv. eerder verkoopwerk, callcenter ervaring). Duurt 5-10 sec extra en kost ~$0,02 per analyse.</span>
+            <span class="toggle-sub">De AI-laag analyseert de notities + sterktes van de KDD semantisch en herrangschikt op basis van concrete praktijkervaring (bijv. eerder verkoopwerk, callcenter ervaring). Duurt 5-10 sec extra.</span>
           </span>
         </label>
 
@@ -814,7 +834,7 @@
           <input type="checkbox" id="useAiCandidates" />
           <span class="toggle-label">
             <span class="toggle-title">AI-verfijning gebruiken <span class="toggle-badge">AI</span></span>
-            <span class="toggle-sub">Claude leest de notities + sterktes van elke kandidaat semantisch en herrangschikt op basis van concrete praktijkervaring relevant voor de rol bij dit bedrijf. Duurt 5-10 sec extra en kost ~$0,02 per analyse.</span>
+            <span class="toggle-sub">De AI-laag analyseert de notities + sterktes van elke kandidaat semantisch en herrangschikt op basis van concrete praktijkervaring relevant voor de rol bij dit bedrijf. Duurt 5-10 sec extra.</span>
           </span>
         </label>
 
@@ -924,6 +944,21 @@
           <div class="stat-item"><div class="stat-num" id="r-stat-3">–</div><div class="stat-label" id="r-stat-3-label">—</div></div>
         </div>
         <div class="recap-row" id="r-recap"></div>
+        <details class="score-explainer">
+          <summary>Hoe wordt de matchscore berekend?</summary>
+          <ul>
+            <li><strong>Sectorfit (25%):</strong> sluit de bedrijfssector aan op de KDD-voorkeur?</li>
+            <li><strong>Vacature-urgentie (25%):</strong> is er een openstaande rol die past op niveau + sector?</li>
+            <li><strong>Locatie (15%):</strong> ligt het bedrijf in West-/Midden-Brabant; regio-voorkeur kandidaat krijgt bonus.</li>
+            <li><strong>Sector-potentieel YC (10%):</strong> hoe past het bedrijfstype bij YoungCapital's portfolio.</li>
+            <li><strong>Bedrijfsomvang (5%):</strong> MKB (25-100 fte) is de sweet spot.</li>
+            <li><strong>Niveau-fit (5%):</strong> past het opleidingsniveau bij het sector-werktype.</li>
+            <li><strong>Recente activiteit (5%):</strong> groeisignalen (uitbreiding, contracten, nieuwe vestiging).</li>
+            <li><strong>Beschikbaarheid + ervaring (10%):</strong> hoe snel inzetbaar.</li>
+          </ul>
+          Een match van 70-80% is al een sterk aanknopingspunt voor commerciële opvolging — 100% is zelden nodig.
+          Met <strong>AI-verfijning</strong> ingeschakeld worden notities en concrete praktijkervaring semantisch meegewogen bovenop deze basis.
+        </details>
       </div>
       <div id="r-list"></div>
       <div class="primary-action" style="margin-top: 20px;">
@@ -1081,10 +1116,13 @@
   ];
 
   const VOORBEELDEN = {
-    logistiek: { k_naam: "Tom",   k_niveau: "MBO", k_studie: "Logistiek medewerker", k_voorkeur: "logistiek", k_uren: "fulltime", k_ervaring: "wat", k_regio: "tilburg", k_aantal: "5", k_sterk: "Aanpakker, fysiek sterk, woont in Tilburg, heeft heftruckcertificaat" },
-    marketing: { k_naam: "Sanne", k_niveau: "HBO", k_studie: "Commerciële Economie", k_voorkeur: "marketing", k_uren: "fulltime", k_ervaring: "wat", k_regio: "breda",   k_aantal: "5", k_sterk: "Communicatief sterk, ervaring met social media campagnes, zoekt commerciële starterspositie" },
-    zorg:      { k_naam: "Lisa",  k_niveau: "HBO", k_studie: "Verpleegkunde",        k_voorkeur: "zorg",      k_uren: "parttime", k_ervaring: "wat", k_regio: "",        k_aantal: "5", k_sterk: "Empathisch, flexibel, beschikbaar in weekenden" },
-    it:        { k_naam: "Daan",  k_niveau: "WO",  k_studie: "Informatica",          k_voorkeur: "it",        k_uren: "fulltime", k_ervaring: "weinig", k_regio: "",     k_aantal: "5", k_sterk: "Recent afgestudeerd, sterk in front-end, zoekt junior developer rol" }
+    logistiek:        { k_naam: "Tom",   k_niveau: "MBO", k_studie: "Logistiek medewerker",   k_voorkeur: "logistiek", k_uren: "fulltime", k_ervaring: "wat",    k_regio: "tilburg", k_aantal: "5", k_sterk: "Aanpakker, fysiek sterk, heftruckcertificaat. Geschikt voor magazijn-, picker- en chauffeurswerk." },
+    productie:        { k_naam: "Bram",  k_niveau: "MBO", k_studie: "Procestechniek",         k_voorkeur: "productie", k_uren: "fulltime", k_ervaring: "wat",    k_regio: "",        k_aantal: "5", k_sterk: "Praktisch, accuraat, kan in 2- of 3-ploegendiensten werken. Geschikt voor operator- en assembly-rollen." },
+    marketing:        { k_naam: "Sanne", k_niveau: "HBO", k_studie: "Commerciële Economie",   k_voorkeur: "marketing", k_uren: "fulltime", k_ervaring: "wat",    k_regio: "breda",   k_aantal: "5", k_sterk: "Communicatief sterk, ervaring met social media campagnes, zoekt commerciële starterspositie." },
+    administratie:    { k_naam: "Eva",   k_niveau: "HBO", k_studie: "Bedrijfsadministratie",  k_voorkeur: "zakelijk",  k_uren: "fulltime", k_ervaring: "wat",    k_regio: "",        k_aantal: "5", k_sterk: "Gestructureerd, zelfstandig, prettig in office support en backoffice-rollen bij MKB-bedrijven." },
+    accountmanagement:{ k_naam: "Joris", k_niveau: "HBO", k_studie: "Sales / Commercie",      k_voorkeur: "marketing", k_uren: "fulltime", k_ervaring: "wat",    k_regio: "",        k_aantal: "5", k_sterk: "Resultaatgericht, ervaring met deur-aan-deur verkoop voor goede doelen. Sterke B2B-acquisitie skills." },
+    zorg:             { k_naam: "Lisa",  k_niveau: "HBO", k_studie: "Verpleegkunde",          k_voorkeur: "zorg",      k_uren: "parttime", k_ervaring: "wat",    k_regio: "",        k_aantal: "5", k_sterk: "Empathisch, flexibel, beschikbaar in weekenden. Geschikt voor flexpool, thuiszorg en verpleegrollen." },
+    it:               { k_naam: "Daan",  k_niveau: "WO",  k_studie: "Informatica",            k_voorkeur: "it",        k_uren: "fulltime", k_ervaring: "weinig", k_regio: "",        k_aantal: "5", k_sterk: "Recent afgestudeerd, sterk in front-end, zoekt junior developer rol bij MKB tech-bedrijf." }
   };
 
   // =====================================================================
@@ -1376,7 +1414,7 @@
     if (mode === "db") $("submitBtn").textContent = "Vind passende bedrijven";
     else if (mode === "bedrijf") $("submitBtn").textContent = "Vind beste kandidaat voor dit bedrijf";
     else if (mode === "prospects") $("submitBtn").textContent = "Rank mijn bedrijfslijst";
-    else if (mode === "live") $("submitBtn").textContent = "Live AI-zoek (Anthropic API)";
+    else if (mode === "live") $("submitBtn").textContent = "Verken nieuwe bedrijven via AI";
 
     // Reset state
     $("results").classList.add("hidden");
@@ -1765,7 +1803,7 @@
     const useAi = $("useAiProspects") && $("useAiProspects").checked;
 
     if (useAi) {
-      startLoadingMessages(["Bedrijfslijst analyseren...", "Rule-based scoring uitvoeren...", "AI-verfijning starten...", "Claude leest notities, opleiding en ervaring...", "Concrete praktijkervaring vergelijken met rol...", "Top matches herrangschikken..."]);
+      startLoadingMessages(["Bedrijfslijst analyseren...", "Rule-based scoring uitvoeren...", "AI-verfijning starten...", "Notities, opleiding en ervaring analyseren...", "Concrete praktijkervaring vergelijken met rol...", "Top matches herrangschikken..."]);
     } else {
       await showLoading(["Bedrijfslijst analyseren...", "Matchscore per bedrijf berekenen...", "Outreach genereren..."], 1600);
     }
@@ -1812,7 +1850,7 @@
 
     $("r-title").textContent = `Top ${matches.length} bedrijven voor ${k.naam}${aiUsed ? " (AI-verfijnd)" : ""}`;
     $("r-subtitle").textContent = aiUsed
-      ? "Gerangschikt door Claude op basis van semantische analyse van notities, opleiding en concrete ervaring."
+      ? "Gerangschikt door de AI-laag op basis van semantische analyse van notities, opleiding en concrete ervaring."
       : "Gerangschikt op rule-based match met deze KDD.";
     $("r-stat-1").textContent = list.length; $("r-stat-1-label").textContent = "Bedrijven in jouw lijst";
     $("r-stat-2").textContent = matches.length; $("r-stat-2-label").textContent = "Geretourneerd in top";
@@ -1837,7 +1875,7 @@
     const useAi = $("useAiCandidates") && $("useAiCandidates").checked;
 
     if (useAi) {
-      startLoadingMessages(["Bedrijfsprofiel analyseren...", "Rule-based scoring uitvoeren...", "AI-verfijning starten...", "Claude leest notities + concrete ervaring per kandidaat...", "Match-fit met specifieke rol bepalen...", "Top kandidaten herrangschikken..."]);
+      startLoadingMessages(["Bedrijfsprofiel analyseren...", "Rule-based scoring uitvoeren...", "AI-verfijning starten...", "Notities + concrete ervaring per kandidaat analyseren...", "Match-fit met specifieke rol bepalen...", "Top kandidaten herrangschikken..."]);
     } else {
       await showLoading(["Bedrijfsprofiel analyseren...", "Kandidaten matchen aan rol...", "Top kandidaten ranken..."], 1600);
     }
@@ -1887,7 +1925,7 @@
 
     $("r-title").textContent = `Top ${scored.length} kandidaten voor ${b.naam}${aiUsed ? " (AI-verfijnd)" : ""}`;
     $("r-subtitle").textContent = aiUsed
-      ? `Gerangschikt door Claude op basis van semantische analyse van notities + concrete praktijkervaring per kandidaat.`
+      ? `Gerangschikt door de AI-laag op basis van semantische analyse van notities + concrete praktijkervaring per kandidaat.`
       : `Gerangschikt op kandidaatfit voor ${b.functie || "deze rol"}.`;
     $("r-stat-1").textContent = list.length; $("r-stat-1-label").textContent = "Kandidaten in jouw lijst";
     $("r-stat-2").textContent = scored.length; $("r-stat-2-label").textContent = "Geretourneerd in top";
@@ -1908,7 +1946,7 @@
     $("results").classList.add("hidden");
     $("loading").classList.remove("hidden");
     $("submitBtn").disabled = true;
-    const stappen = ["Verbinden met Anthropic API...", "Kandidaatprofiel verzenden...", "AI analyseert MKB-bedrijven in West-/Midden-Brabant...", "Outreach genereren..."];
+    const stappen = ["Verbinden met AI-service...", "Kandidaatprofiel verzenden...", "AI analyseert MKB-bedrijven in West-/Midden-Brabant...", "Outreach genereren..."];
     const msg = $("loading-msg"); let i = 0; msg.textContent = stappen[0];
     const interval = setInterval(() => { i = (i + 1) % stappen.length; msg.textContent = stappen[i]; }, 3000);
 

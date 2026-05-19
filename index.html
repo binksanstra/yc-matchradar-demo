@@ -342,6 +342,9 @@
       transition: all 0.15s;
     }
     .pool-action:hover { background: var(--red); color: white; }
+    .pool-action.edit { color: var(--yc-orange); border-color: var(--yc-orange); }
+    .pool-action.edit:hover { background: var(--yc-orange); color: white; }
+    .pool-actions-group { display: flex; gap: 6px; flex-shrink: 0; }
     .add-pool-btn {
       background: white; color: var(--yc-orange);
       border: 1px dashed var(--yc-orange);
@@ -586,7 +589,9 @@
               <option value="zorg">Zorg &amp; Welzijn</option>
               <option value="finance">Finance / Accounting</option>
               <option value="techniek">Techniek</option>
+              <option value="anders">Anders (zelf invullen)</option>
             </select>
+            <input type="text" id="k_voorkeur_custom" class="hidden" placeholder="Eigen voorkeur (verschijnt bij 'Anders')" style="margin-top: 6px;" />
           </div>
           <div class="field">
             <label for="k_ervaring">Werkervaring</label>
@@ -653,8 +658,9 @@
               <option value="zorg">Zorg &amp; Welzijn</option>
               <option value="finance">Finance / Accounting</option>
               <option value="techniek">Techniek</option>
-              <option value="anders">Anders</option>
+              <option value="anders">Anders (zelf invullen)</option>
             </select>
+            <input type="text" id="b_sector_custom" class="hidden" placeholder="Eigen sectornaam (verschijnt bij 'Anders')" style="margin-top: 6px;" />
           </div>
           <div class="field">
             <label for="b_locatie">Locatie <span class="req">*</span></label>
@@ -761,8 +767,9 @@
                   <option value="zorg">Zorg &amp; Welzijn</option>
                   <option value="finance">Finance / Accounting</option>
                   <option value="techniek">Techniek</option>
-                  <option value="anders">Anders</option>
+                  <option value="anders">Anders (zelf invullen)</option>
                 </select>
+                <input type="text" id="p_sector_custom" class="hidden" placeholder="Eigen sectornaam (verschijnt bij 'Anders')" style="margin-top: 6px;" />
               </div>
               <div class="field">
                 <label for="p_locatie">Locatie <span class="req">*</span></label>
@@ -884,7 +891,9 @@
                   <option value="zorg">Zorg &amp; Welzijn</option>
                   <option value="finance">Finance / Accounting</option>
                   <option value="techniek">Techniek</option>
+                  <option value="anders">Anders (zelf invullen)</option>
                 </select>
+                <input type="text" id="c_voorkeur_custom" class="hidden" placeholder="Eigen voorkeur (verschijnt bij 'Anders')" style="margin-top: 6px;" />
               </div>
             </div>
 
@@ -944,20 +953,9 @@
           <div class="stat-item"><div class="stat-num" id="r-stat-3">–</div><div class="stat-label" id="r-stat-3-label">—</div></div>
         </div>
         <div class="recap-row" id="r-recap"></div>
-        <details class="score-explainer">
+        <details class="score-explainer" id="scoreExplainer">
           <summary>Hoe wordt de matchscore berekend?</summary>
-          <ul>
-            <li><strong>Sectorfit (25%):</strong> sluit de bedrijfssector aan op de KDD-voorkeur?</li>
-            <li><strong>Vacature-urgentie (25%):</strong> is er een openstaande rol die past op niveau + sector?</li>
-            <li><strong>Locatie (15%):</strong> ligt het bedrijf in West-/Midden-Brabant; regio-voorkeur kandidaat krijgt bonus.</li>
-            <li><strong>Sector-potentieel YC (10%):</strong> hoe past het bedrijfstype bij YoungCapital's portfolio.</li>
-            <li><strong>Bedrijfsomvang (5%):</strong> MKB (25-100 fte) is de sweet spot.</li>
-            <li><strong>Niveau-fit (5%):</strong> past het opleidingsniveau bij het sector-werktype.</li>
-            <li><strong>Recente activiteit (5%):</strong> groeisignalen (uitbreiding, contracten, nieuwe vestiging).</li>
-            <li><strong>Beschikbaarheid + ervaring (10%):</strong> hoe snel inzetbaar.</li>
-          </ul>
-          Een match van 70-80% is al een sterk aanknopingspunt voor commerciële opvolging — 100% is zelden nodig.
-          Met <strong>AI-verfijning</strong> ingeschakeld worden notities en concrete praktijkervaring semantisch meegewogen bovenop deze basis.
+          <div id="scoreExplainerBody"></div>
         </details>
       </div>
       <div id="r-list"></div>
@@ -1133,6 +1131,26 @@
     return rank[kNiveau] >= rank[vNiveau];
   }
 
+  // Returns 0-1 score voor hoeveel betekenisvolle woorden uit needles ook in haystack zitten
+  function keywordOverlap(haystack, needles) {
+    if (!haystack || !needles) return 0;
+    const h = String(haystack).toLowerCase();
+    const stopwords = new Set(["voor","naar","heeft","heeft","ervaring","werk","jaar","jaren","onze","onze","deze","deze","mijn","aan","door","over","graag","bij","met","een","het","van","een","ook","wel","niet","maar","zoals","bijv","als","dan","dat","die","dit","daar","hier","etc"]);
+    const words = Array.from(new Set((String(needles).toLowerCase().match(/[a-zà-ÿ]{4,}/g) || []).filter(w => !stopwords.has(w))));
+    if (words.length === 0) return 0;
+    let matches = 0;
+    for (const w of words) { if (h.includes(w)) matches++; }
+    return matches / words.length;
+  }
+
+  // Sectorlabel voor weergave (rekening houdend met customSector / customVoorkeur)
+  function sectorLabel(obj, isKandidaat) {
+    const custom = isKandidaat ? obj.customVoorkeur : obj.customSector;
+    if (custom) return custom;
+    const key = isKandidaat ? obj.voorkeur : obj.sector;
+    return (SECTOREN[key] || {}).label || key;
+  }
+
   function vindBesteVacature(k, b) {
     let beste = null, besteScore = -1;
     for (const v of (b.vacatures || [])) {
@@ -1158,48 +1176,96 @@
     const locKey = (b.locatie || "").toLowerCase().trim();
     const locData = LOCATIES[locKey] || null;
 
-    const sectorPunten = (sectorData.ycPotentieel / 10) * 10;
-    let locatiePunten = locData ? (locData.score / 10) * 15 : 4;
+    // 1. Sector-potentieel YC (0-8)
+    const sectorPunten = (sectorData.ycPotentieel / 10) * 8;
+
+    // 2. Locatie + regio-voorkeur (0-12)
+    let locatiePunten = locData ? (locData.score / 10) * 12 : 3;
     if (regioVoorkeur === "breda" && locData) {
-      if (locData.vestiging === "Breda") locatiePunten = Math.min(15, locatiePunten + 2);
-      else if (locData.vestiging === "Tilburg") locatiePunten = Math.max(0, locatiePunten - 4);
+      if (locData.vestiging === "Breda") locatiePunten = Math.min(12, locatiePunten + 2);
+      else if (locData.vestiging === "Tilburg") locatiePunten = Math.max(0, locatiePunten - 3);
     } else if (regioVoorkeur === "tilburg" && locData) {
-      if (locData.vestiging === "Tilburg") locatiePunten = Math.min(15, locatiePunten + 2);
-      else if (locData.vestiging === "Breda") locatiePunten = Math.max(0, locatiePunten - 4);
+      if (locData.vestiging === "Tilburg") locatiePunten = Math.min(12, locatiePunten + 2);
+      else if (locData.vestiging === "Breda") locatiePunten = Math.max(0, locatiePunten - 3);
     }
+
+    // 3. Bedrijfsomvang (0-5)
     const omvangPunten = (OMVANG_SCORE[b.omvang] / 10) * 5;
+
+    // 4. Kandidaat-sectorfit (0-20)
     let kandidaatFitPunten;
-    if (k.voorkeur === "breed") kandidaatFitPunten = 18;
-    else if (k.voorkeur === b.sector) kandidaatFitPunten = 25;
-    else if (voorkeurData && voorkeurData.type === sectorData.type) kandidaatFitPunten = 12;
-    else kandidaatFitPunten = 4;
+    if (k.voorkeur === "breed") kandidaatFitPunten = 14;
+    else if (k.voorkeur === "anders" && b.sector === "anders" && k.customVoorkeur && b.customSector
+             && k.customVoorkeur.toLowerCase().trim() === b.customSector.toLowerCase().trim()) {
+      kandidaatFitPunten = 20;
+    } else if (k.voorkeur === b.sector && k.voorkeur !== "anders") {
+      kandidaatFitPunten = 20;
+    } else if (k.voorkeur === "anders" || b.sector === "anders") {
+      // Eén kant custom: kijk of er overlap is met sterk/notities
+      const overlap = keywordOverlap(k.customVoorkeur || "", b.customSector || sectorData.label) +
+                       keywordOverlap(k.sterk || "", b.customSector || sectorData.label);
+      kandidaatFitPunten = 4 + Math.min(8, Math.round(overlap * 8));
+    } else if (voorkeurData && voorkeurData.type === sectorData.type) {
+      kandidaatFitPunten = 10;
+    } else {
+      kandidaatFitPunten = 3;
+    }
+
+    // 5. Vacature-urgentie en fit (0-20)
     const besteVac = vindBesteVacature(k, b);
     let vacaturePunten = 0, isVacatureFit = false;
     if (besteVac) {
       const sectorMatch = (k.voorkeur === b.sector) || (k.voorkeur === "breed");
       const niveauMatch = niveauOK(k.niveau, besteVac.niveau);
       if (sectorMatch && niveauMatch) {
-        vacaturePunten = URGENTIE_SCORE[besteVac.urgentie] || 10;
+        vacaturePunten = (URGENTIE_SCORE[besteVac.urgentie] || 10) * 0.8;
         isVacatureFit = true;
-      } else if (niveauMatch) vacaturePunten = (URGENTIE_SCORE[besteVac.urgentie] || 10) * 0.55;
-      else vacaturePunten = (URGENTIE_SCORE[besteVac.urgentie] || 10) * 0.25;
+      } else if (niveauMatch) vacaturePunten = (URGENTIE_SCORE[besteVac.urgentie] || 10) * 0.45;
+      else vacaturePunten = (URGENTIE_SCORE[besteVac.urgentie] || 10) * 0.2;
     }
+
+    // 6. Niveau-fit (0-5)
     const niveauPunten = sectorData.niveau.includes(k.niveau) ? 5 : 2;
+
+    // 7. Recente activiteit (0-5)
     let activiteitPunten = 0;
     for (const n of (b.nieuws || [])) activiteitPunten += (NIEUWS_TYPE_BOOST[n.type] || 2);
     activiteitPunten = Math.min(5, activiteitPunten);
-    let beschikbaarheidPunten = 5;
-    if (k.uren === "fulltime") beschikbaarheidPunten += 3;
-    else if (k.uren === "parttime") beschikbaarheidPunten += 2;
-    else if (k.uren === "flex") beschikbaarheidPunten += 2;
-    else beschikbaarheidPunten += 1;
-    if (k.ervaring === "veel") beschikbaarheidPunten += 2;
-    else if (k.ervaring === "wat") beschikbaarheidPunten += 1;
-    beschikbaarheidPunten = Math.min(10, beschikbaarheidPunten);
 
-    const totaal = sectorPunten + locatiePunten + omvangPunten + kandidaatFitPunten + vacaturePunten + niveauPunten + activiteitPunten + beschikbaarheidPunten;
+    // 8. Beschikbaarheid + ervaring (0-5)
+    let beschikbaarheidPunten = 2;
+    if (k.uren === "fulltime") beschikbaarheidPunten += 2;
+    else if (k.uren === "parttime") beschikbaarheidPunten += 1;
+    else if (k.uren === "flex") beschikbaarheidPunten += 1;
+    if (k.ervaring === "veel") beschikbaarheidPunten += 1.5;
+    else if (k.ervaring === "wat") beschikbaarheidPunten += 0.5;
+    beschikbaarheidPunten = Math.min(5, beschikbaarheidPunten);
+
+    // 9. Studie/opleiding-relevantie voor bedrijfssector (0-10)
+    let studiePunten = 0;
+    if (k.studie) {
+      const studieVsSector = keywordOverlap(k.studie, sectorData.label + " " + (b.customSector || ""));
+      const studieVsVacatures = (b.vacatures || []).reduce((m, v) => Math.max(m, keywordOverlap(k.studie, v.titel || "")), 0);
+      studiePunten = Math.min(10, Math.round((studieVsSector * 5) + (studieVsVacatures * 5)));
+    }
+
+    // 10. Sterktes/pitch matchen aan rol bij dit bedrijf (0-10)
+    let sterkPunten = 0;
+    if (k.sterk) {
+      const sterkVsSector = keywordOverlap(k.sterk, sectorData.label + " " + (b.customSector || ""));
+      const sterkVsVacatures = (b.vacatures || []).reduce((m, v) => Math.max(m, keywordOverlap(k.sterk, v.titel || "")), 0);
+      const sterkVsNieuws = (b.nieuws || []).reduce((m, n) => Math.max(m, keywordOverlap(k.sterk, n.tekst || "")), 0);
+      sterkPunten = Math.min(10, Math.round((sterkVsSector * 4) + (sterkVsVacatures * 4) + (sterkVsNieuws * 2)));
+    }
+
+    const totaal = sectorPunten + locatiePunten + omvangPunten + kandidaatFitPunten +
+                   vacaturePunten + niveauPunten + activiteitPunten + beschikbaarheidPunten +
+                   studiePunten + sterkPunten;
     let score = Math.round(Math.max(2.5, Math.min(9.8, totaal / 10)) * 10) / 10;
-    return { score, sectorData, voorkeurData, locData, locKey, besteVacature: besteVac, isVacatureFit };
+    return {
+      score, sectorData, voorkeurData, locData, locKey, besteVacature: besteVac, isVacatureFit,
+      breakdown: { sectorPunten, locatiePunten, omvangPunten, kandidaatFitPunten, vacaturePunten, niveauPunten, activiteitPunten, beschikbaarheidPunten, studiePunten, sterkPunten }
+    };
   }
 
   // Score voor MODUS 2: hoe goed past KANDIDAAT bij gegeven BEDRIJF
@@ -1207,59 +1273,110 @@
     const sectorData = SECTOREN[b.sector] || SECTOREN.anders;
     const voorkeurData = SECTOREN[c.voorkeur] || null;
 
-    // Sectorfit (35)
+    // 1. Sectorfit (0-20)
     let sectorFit;
-    if (c.voorkeur === b.sector) sectorFit = 35;
-    else if (c.voorkeur === "breed") sectorFit = 22;
-    else if (voorkeurData && voorkeurData.type === sectorData.type) sectorFit = 16;
-    else sectorFit = 4;
+    const cVoorkeurStr = c.customVoorkeur || (SECTOREN[c.voorkeur] || {}).label || c.voorkeur;
+    const bSectorStr = b.customSector || sectorData.label;
+    if (c.voorkeur === "anders" && b.sector === "anders" && c.customVoorkeur && b.customSector
+        && c.customVoorkeur.toLowerCase().trim() === b.customSector.toLowerCase().trim()) {
+      sectorFit = 20;
+    } else if (c.voorkeur === b.sector && c.voorkeur !== "anders") {
+      sectorFit = 20;
+    } else if (c.voorkeur === "breed") {
+      sectorFit = 13;
+    } else if (voorkeurData && voorkeurData.type === sectorData.type) {
+      sectorFit = 10;
+    } else if (c.voorkeur === "anders" || b.sector === "anders") {
+      const overlap = keywordOverlap(cVoorkeurStr, bSectorStr);
+      sectorFit = 4 + Math.min(10, Math.round(overlap * 10));
+    } else {
+      sectorFit = 3;
+    }
 
-    // Niveau-match met vacature (20)
+    // 2. Niveau-match met vacature (0-15)
     let niveauPunten = 0;
     if (b.niveau) {
-      if (c.niveau === b.niveau) niveauPunten = 20;
-      else if (niveauOK(c.niveau, b.niveau)) niveauPunten = 14;
-      else niveauPunten = 4;
+      if (c.niveau === b.niveau) niveauPunten = 15;
+      else if (niveauOK(c.niveau, b.niveau)) niveauPunten = 10;
+      else niveauPunten = 3;
     } else {
-      niveauPunten = sectorData.niveau.includes(c.niveau) ? 16 : 8;
+      niveauPunten = sectorData.niveau.includes(c.niveau) ? 12 : 6;
     }
 
-    // Locatie-match: woonplaats kandidaat vs bedrijfslocatie (15)
-    let locPunten = 6;
+    // 3. Locatie-match: woonplaats kandidaat vs bedrijfslocatie (0-10)
+    let locPunten = 4;
     const cw = (c.woonplaats || "").toLowerCase().trim();
     const bl = (b.locatie || "").toLowerCase().trim();
-    if (cw && bl && cw === bl) locPunten = 15;
+    if (cw && bl && cw === bl) locPunten = 10;
     else if (cw && bl) {
       const cData = LOCATIES[cw], bData = LOCATIES[bl];
-      if (cData && bData && cData.vestiging === bData.vestiging) locPunten = 12;
-      else if (cData && bData && cData.regio === bData.regio) locPunten = 10;
+      if (cData && bData && cData.vestiging === bData.vestiging) locPunten = 8;
+      else if (cData && bData && cData.regio === bData.regio) locPunten = 6;
     }
 
-    // Beschikbaarheid (10)
-    let beschPunten = 5;
-    if (c.uren === "fulltime") beschPunten += 3;
-    else if (c.uren === "parttime") beschPunten += 2;
-    else if (c.uren === "flex") beschPunten += 2;
-    else beschPunten += 1;
+    // 4. Beschikbaarheid (0-7)
+    let beschPunten = 3;
+    if (c.uren === "fulltime") beschPunten = 7;
+    else if (c.uren === "parttime") beschPunten = 5;
+    else if (c.uren === "flex") beschPunten = 5;
+    else beschPunten = 3;
 
-    // Ervaring (10)
-    let ervPunten = 4;
-    if (c.ervaring === "veel") ervPunten = 10;
-    else if (c.ervaring === "wat") ervPunten = 7;
+    // 5. Ervaring algemeen (0-8)
+    let ervPunten = 3;
+    if (c.ervaring === "veel") ervPunten = 8;
+    else if (c.ervaring === "wat") ervPunten = 6;
 
-    // Notities-match (10): zoek trefwoorden gerelateerd aan sector/functie
-    let notitiePunten = 5;
+    // 6. Studie / opleiding match met functie of sector (0-10)
+    let studieFunctie = 0;
+    if (c.studie) {
+      const sFunctie = keywordOverlap(c.studie, b.functie || "");
+      const sSector = keywordOverlap(c.studie, bSectorStr);
+      studieFunctie = Math.min(10, Math.round((sFunctie * 6) + (sSector * 4)));
+    }
+
+    // 7. Notities-/sterktesmatch met functie + extra context (0-15)
+    //    Zoekt naar concrete praktijkervaring relevant voor specifieke rol
+    let notitieMatch = 0;
     if (c.notities) {
-      const txt = c.notities.toLowerCase();
-      const sectorWoord = sectorData.label.toLowerCase().split(" ")[0];
-      if (txt.includes(sectorWoord)) notitiePunten = 10;
-      else if (b.functie && txt.includes(b.functie.toLowerCase().split(" ")[0])) notitiePunten = 9;
-      else if (txt.length > 30) notitiePunten = 7;
+      const nFunctie = keywordOverlap(c.notities, b.functie || "");
+      const nExtra = keywordOverlap(c.notities, b.extra || "");
+      const nSector = keywordOverlap(c.notities, bSectorStr);
+      // basisbonus voor wel-aanwezige notities
+      const lengteBonus = c.notities.length > 30 ? 2 : 0;
+      notitieMatch = Math.min(15, Math.round((nFunctie * 7) + (nExtra * 4) + (nSector * 4) + lengteBonus));
     }
 
-    const totaal = sectorFit + niveauPunten + locPunten + beschPunten + ervPunten + notitiePunten;
+    // 8. Functie/rol keyword-fit (los van studie/notities) (0-5)
+    let functieFit = 0;
+    if (b.functie) {
+      const fSector = keywordOverlap(b.functie, bSectorStr);
+      const fStudie = keywordOverlap(b.functie, c.studie || "");
+      functieFit = Math.min(5, Math.round((fSector * 2) + (fStudie * 3)));
+    }
+
+    // 9. Urgentie van de bedrijfsvacature (0-5)
+    let urgentieBonus = 0;
+    if (b.urgentie === "urgent") urgentieBonus = 5;
+    else if (b.urgentie === "hoog") urgentieBonus = 4;
+    else if (b.urgentie === "midden") urgentieBonus = 2;
+    else if (b.urgentie === "laag") urgentieBonus = 1;
+
+    // 10. Extra context (groei-signalen, openheid voor starters) (0-5)
+    let extraBonus = 0;
+    if (b.extra) {
+      const groei = /groei|uitbrei|nieuwe vestig|werft|veel vacatures|starter|junior/i.test(b.extra);
+      if (groei) extraBonus = 5;
+      else if (b.extra.length > 20) extraBonus = 2;
+    }
+
+    const totaal = sectorFit + niveauPunten + locPunten + beschPunten + ervPunten +
+                   studieFunctie + notitieMatch + functieFit + urgentieBonus + extraBonus;
     let score = Math.round(Math.max(2.5, Math.min(9.8, totaal / 10)) * 10) / 10;
-    return { score, sectorData };
+    return {
+      score, sectorData,
+      breakdown: { sectorFit, niveauPunten, locPunten, beschPunten, ervPunten,
+                   studieFunctie, notitieMatch, functieFit, urgentieBonus, extraBonus }
+    };
   }
 
   // =====================================================================
@@ -1381,6 +1498,18 @@
   // =====================================================================
   const $ = (id) => document.getElementById(id);
   function escapeHtml(str) { return String(str || "").replace(/[&<>"]/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[s])); }
+
+  // Bind custom-veld toggle aan elke sector/voorkeur dropdown met "anders" optie
+  function bindCustomToggle(selectId, customId) {
+    const sel = $(selectId), cust = $(customId);
+    if (!sel || !cust) return;
+    const update = () => {
+      if (sel.value === "anders") { cust.classList.remove("hidden"); }
+      else { cust.classList.add("hidden"); cust.value = ""; }
+    };
+    sel.addEventListener("change", update);
+    update();
+  }
   function toonError(msg) { const box = $("errorBox"); box.textContent = msg; box.classList.remove("hidden"); }
   function verbergError() { $("errorBox").classList.add("hidden"); }
 
@@ -1428,11 +1557,14 @@
   // KDD FORM
   // =====================================================================
   function leesKDD() {
+    const voorkeur = $("k_voorkeur").value;
+    const customVoorkeur = voorkeur === "anders" ? ($("k_voorkeur_custom").value || "").trim() : "";
     return {
       naam: $("k_naam").value.trim() || "de kandidaat",
       niveau: $("k_niveau").value,
       studie: $("k_studie").value.trim(),
-      voorkeur: $("k_voorkeur").value,
+      voorkeur,
+      customVoorkeur,
       uren: $("k_uren").value,
       ervaring: $("k_ervaring").value,
       regio: $("k_regio").value,
@@ -1444,6 +1576,7 @@
     const f = [];
     if (!k.naam || k.naam === "de kandidaat") f.push("Vul een voornaam voor de kandidaat in.");
     if (!k.voorkeur) f.push("Kies een voorkeurssector.");
+    if (k.voorkeur === "anders" && !k.customVoorkeur) f.push("Vul de eigen voorkeurssector in bij 'Anders'.");
     return f;
   }
   function laadKDDVoorbeeld(naam) {
@@ -1465,9 +1598,12 @@
   // BEDRIJF FORM (modus 2)
   // =====================================================================
   function leesBedrijf() {
+    const sector = $("b_sector").value;
+    const customSector = sector === "anders" ? ($("b_sector_custom").value || "").trim() : "";
     return {
       naam: $("b_naam").value.trim(),
-      sector: $("b_sector").value,
+      sector,
+      customSector,
       locatie: $("b_locatie").value.trim(),
       omvang: $("b_omvang").value,
       functie: $("b_functie").value.trim(),
@@ -1481,6 +1617,7 @@
     const f = [];
     if (!b.naam) f.push("Vul de bedrijfsnaam in.");
     if (!b.locatie) f.push("Vul de locatie in.");
+    if (b.sector === "anders" && !b.customSector) f.push("Vul de eigen sectornaam in bij 'Anders'.");
     return f;
   }
 
@@ -1494,43 +1631,80 @@
       $("prospectList").innerHTML = `<div class="empty-state">Nog geen bedrijven toegevoegd. Klik op "+ Bedrijf toevoegen" om te beginnen.</div>`;
       return;
     }
-    $("prospectList").innerHTML = list.map(p => `
+    $("prospectList").innerHTML = list.map(p => {
+      const sectorLabel = p.customSector || (SECTOREN[p.sector] || {}).label || p.sector;
+      return `
       <div class="pool-item">
         <div class="pool-info">
           <strong>${escapeHtml(p.naam)}</strong>
-          <span class="pool-meta">${escapeHtml((SECTOREN[p.sector] || {}).label || p.sector)} · ${escapeHtml(p.locatie)} · ${escapeHtml(OMVANG_KORT[p.omvang] || p.omvang)}</span>
+          <span class="pool-meta">${escapeHtml(sectorLabel)} · ${escapeHtml(p.locatie)} · ${escapeHtml(OMVANG_KORT[p.omvang] || p.omvang)}</span>
         </div>
-        <button class="pool-action" data-del-prospect="${p.id}">Verwijder</button>
+        <div class="pool-actions-group">
+          <button class="pool-action edit" data-edit-prospect="${p.id}">Wijzig</button>
+          <button class="pool-action" data-del-prospect="${p.id}">Verwijder</button>
+        </div>
       </div>
-    `).join("");
+    `;}).join("");
     document.querySelectorAll("[data-del-prospect]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.dataset.delProspect;
+        if (!confirm("Weet je zeker dat je dit bedrijf wilt verwijderen?")) return;
         const filtered = loadStorage(PROSPECT_KEY).filter(p => p.id !== id);
         saveStorage(PROSPECT_KEY, filtered);
         renderProspectList();
       });
     });
+    document.querySelectorAll("[data-edit-prospect]").forEach(btn => {
+      btn.addEventListener("click", () => openProspectForm(btn.dataset.editProspect));
+    });
   }
-  function openProspectForm() {
+  function openProspectForm(editId) {
     $("addProspectForm").classList.remove("hidden");
-    $("addProspectTitle").textContent = "Nieuw bedrijf toevoegen";
-    $("p_id").value = "";
-    $("p_naam").value = ""; $("p_locatie").value = "";
-    $("p_sector").value = "marketing"; $("p_omvang").value = "mkb";
-    $("p_vac_titel").value = ""; $("p_vac_niveau").value = ""; $("p_vac_urgentie").value = "midden";
-    $("p_nieuws").value = "";
+    if (editId) {
+      const list = loadStorage(PROSPECT_KEY);
+      const p = list.find(x => x.id === editId);
+      if (!p) { toonError("Bedrijf niet gevonden."); return; }
+      $("addProspectTitle").textContent = "Bedrijf wijzigen";
+      $("p_id").value = p.id;
+      $("p_naam").value = p.naam || "";
+      $("p_locatie").value = p.locatie || "";
+      $("p_sector").value = p.sector || "marketing";
+      $("p_omvang").value = p.omvang || "mkb";
+      if ($("p_sector_custom")) {
+        $("p_sector_custom").value = p.customSector || "";
+        $("p_sector_custom").classList.toggle("hidden", p.sector !== "anders");
+      }
+      const vac = (p.vacatures && p.vacatures[0]) || {};
+      $("p_vac_titel").value = vac.titel || "";
+      $("p_vac_niveau").value = vac.niveau || "";
+      $("p_vac_urgentie").value = vac.urgentie || "midden";
+      const nws = (p.nieuws && p.nieuws[0]) || {};
+      $("p_nieuws").value = nws.tekst || "";
+    } else {
+      $("addProspectTitle").textContent = "Nieuw bedrijf toevoegen";
+      $("p_id").value = "";
+      $("p_naam").value = ""; $("p_locatie").value = "";
+      $("p_sector").value = "marketing"; $("p_omvang").value = "mkb";
+      if ($("p_sector_custom")) { $("p_sector_custom").value = ""; $("p_sector_custom").classList.add("hidden"); }
+      $("p_vac_titel").value = ""; $("p_vac_niveau").value = ""; $("p_vac_urgentie").value = "midden";
+      $("p_nieuws").value = "";
+    }
     $("p_naam").focus();
+    $("addProspectForm").scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
   function closeProspectForm() { $("addProspectForm").classList.add("hidden"); }
   function saveProspect() {
     const naam = $("p_naam").value.trim();
     const locatie = $("p_locatie").value.trim();
     if (!naam || !locatie) { alert("Vul minimaal naam en locatie in."); return; }
+    const sector = $("p_sector").value;
+    const customSector = sector === "anders" ? $("p_sector_custom").value.trim() : "";
+    if (sector === "anders" && !customSector) { alert("Vul de eigen sectornaam in bij 'Anders'."); return; }
     const id = $("p_id").value || makeId();
     const obj = {
       id, naam,
-      sector: $("p_sector").value,
+      sector,
+      customSector,
       locatie,
       omvang: $("p_omvang").value,
       vacatures: [],
@@ -1565,44 +1739,79 @@
       $("candidateList").innerHTML = `<div class="empty-state">Nog geen kandidaten toegevoegd. Klik op "+ Kandidaat toevoegen" om te beginnen.</div>`;
       return;
     }
-    $("candidateList").innerHTML = list.map(c => `
+    $("candidateList").innerHTML = list.map(c => {
+      const voorkeurLabel = c.customVoorkeur || (SECTOREN[c.voorkeur] || {}).label || c.voorkeur;
+      return `
       <div class="pool-item">
         <div class="pool-info">
           <strong>${escapeHtml(c.naam)}</strong>
-          <span class="pool-meta">${escapeHtml(c.niveau)}${c.studie ? " · " + escapeHtml(c.studie) : ""} · voorkeur ${escapeHtml((SECTOREN[c.voorkeur] || {}).label || c.voorkeur)}${c.woonplaats ? " · " + escapeHtml(c.woonplaats) : ""}</span>
+          <span class="pool-meta">${escapeHtml(c.niveau)}${c.studie ? " · " + escapeHtml(c.studie) : ""} · voorkeur ${escapeHtml(voorkeurLabel)}${c.woonplaats ? " · " + escapeHtml(c.woonplaats) : ""}</span>
         </div>
-        <button class="pool-action" data-del-cand="${c.id}">Verwijder</button>
+        <div class="pool-actions-group">
+          <button class="pool-action edit" data-edit-cand="${c.id}">Wijzig</button>
+          <button class="pool-action" data-del-cand="${c.id}">Verwijder</button>
+        </div>
       </div>
-    `).join("");
+    `;}).join("");
     document.querySelectorAll("[data-del-cand]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.dataset.delCand;
+        if (!confirm("Weet je zeker dat je deze kandidaat wilt verwijderen?")) return;
         const filtered = loadStorage(CANDIDATE_KEY).filter(c => c.id !== id);
         saveStorage(CANDIDATE_KEY, filtered);
         renderCandidateList();
       });
     });
+    document.querySelectorAll("[data-edit-cand]").forEach(btn => {
+      btn.addEventListener("click", () => openCandidateForm(btn.dataset.editCand));
+    });
   }
-  function openCandidateForm() {
+  function openCandidateForm(editId) {
     $("addCandidateForm").classList.remove("hidden");
-    $("addCandidateTitle").textContent = "Nieuwe kandidaat toevoegen";
-    $("c_id").value = "";
-    $("c_naam").value = ""; $("c_studie").value = ""; $("c_woonplaats").value = ""; $("c_notities").value = "";
-    $("c_niveau").value = "HBO"; $("c_voorkeur").value = "marketing";
-    $("c_uren").value = "parttime"; $("c_ervaring").value = "wat";
+    if (editId) {
+      const list = loadStorage(CANDIDATE_KEY);
+      const c = list.find(x => x.id === editId);
+      if (!c) { toonError("Kandidaat niet gevonden."); return; }
+      $("addCandidateTitle").textContent = "Kandidaat wijzigen";
+      $("c_id").value = c.id;
+      $("c_naam").value = c.naam || "";
+      $("c_studie").value = c.studie || "";
+      $("c_woonplaats").value = c.woonplaats || "";
+      $("c_notities").value = c.notities || "";
+      $("c_niveau").value = c.niveau || "HBO";
+      $("c_voorkeur").value = c.voorkeur || "marketing";
+      $("c_uren").value = c.uren || "parttime";
+      $("c_ervaring").value = c.ervaring || "wat";
+      if ($("c_voorkeur_custom")) {
+        $("c_voorkeur_custom").value = c.customVoorkeur || "";
+        $("c_voorkeur_custom").classList.toggle("hidden", c.voorkeur !== "anders");
+      }
+    } else {
+      $("addCandidateTitle").textContent = "Nieuwe kandidaat toevoegen";
+      $("c_id").value = "";
+      $("c_naam").value = ""; $("c_studie").value = ""; $("c_woonplaats").value = ""; $("c_notities").value = "";
+      $("c_niveau").value = "HBO"; $("c_voorkeur").value = "marketing";
+      $("c_uren").value = "parttime"; $("c_ervaring").value = "wat";
+      if ($("c_voorkeur_custom")) { $("c_voorkeur_custom").value = ""; $("c_voorkeur_custom").classList.add("hidden"); }
+    }
     $("c_naam").focus();
+    $("addCandidateForm").scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
   function closeCandidateForm() { $("addCandidateForm").classList.add("hidden"); }
   function saveCandidate() {
     const naam = $("c_naam").value.trim();
     if (!naam) { alert("Vul de voornaam in."); return; }
+    const voorkeur = $("c_voorkeur").value;
+    const customVoorkeur = voorkeur === "anders" ? $("c_voorkeur_custom").value.trim() : "";
+    if (voorkeur === "anders" && !customVoorkeur) { alert("Vul de eigen voorkeurssector in bij 'Anders'."); return; }
     const id = $("c_id").value || makeId();
     const obj = {
       id, naam,
       niveau: $("c_niveau").value,
       studie: $("c_studie").value.trim(),
       woonplaats: $("c_woonplaats").value.trim(),
-      voorkeur: $("c_voorkeur").value,
+      voorkeur,
+      customVoorkeur,
       uren: $("c_uren").value,
       ervaring: $("c_ervaring").value,
       notities: $("c_notities").value.trim()
@@ -1702,6 +1911,46 @@
   // =====================================================================
   // GENEREER (per modus)
   // =====================================================================
+  function vulScoreUitleg(mode) {
+    const body = $("scoreExplainerBody");
+    if (!body) return;
+    if (mode === "bedrijf") {
+      body.innerHTML = `
+        <ul>
+          <li><strong>Sectorfit (20%):</strong> sluit de voorkeurssector van de kandidaat aan op de sector van het bedrijf?</li>
+          <li><strong>Niveau-match (15%):</strong> matcht het opleidingsniveau van de kandidaat met het gevraagde rolniveau?</li>
+          <li><strong>Notities + sterktes vs functie (15%):</strong> bevatten de notities concrete praktijkervaring relevant voor de rol?</li>
+          <li><strong>Locatie (10%):</strong> hoe dicht ligt de woonplaats van de kandidaat bij de werklocatie?</li>
+          <li><strong>Studie/opleiding-match (10%):</strong> overlapt de studierichting met de functie of sector?</li>
+          <li><strong>Ervaring (8%):</strong> hoeveel relevante werkervaring heeft de kandidaat?</li>
+          <li><strong>Beschikbaarheid (7%):</strong> fulltime/parttime/flex passend bij rol.</li>
+          <li><strong>Functie/rol keyword-fit (5%):</strong> overlap tussen functietitel en kandidaatprofiel.</li>
+          <li><strong>Urgentie van bedrijf (5%):</strong> hoe acuut wil het bedrijf invullen.</li>
+          <li><strong>Groei-signalen extra context (5%):</strong> bedrijfsuitbreiding, openheid voor starters.</li>
+        </ul>
+        Een match van 70-80% is al een sterk aanknopingspunt om de kandidaat voor te stellen — 100% is zelden nodig.
+        Met <strong>AI-verfijning</strong> ingeschakeld worden notities en concrete praktijkervaring semantisch meegewogen bovenop deze basis.
+      `;
+    } else {
+      body.innerHTML = `
+        <ul>
+          <li><strong>Kandidaat-sectorfit (20%):</strong> sluit de bedrijfssector aan op de KDD-voorkeur?</li>
+          <li><strong>Vacature-urgentie + fit (20%):</strong> is er een openstaande rol die past op niveau + sector?</li>
+          <li><strong>Locatie + regio-voorkeur (12%):</strong> ligt het bedrijf in West-/Midden-Brabant; regio-voorkeur kandidaat geeft bonus.</li>
+          <li><strong>Sterktes/pitch keyword-fit (10%):</strong> overlap tussen de pitch van de kandidaat en sector/vacatures/nieuws.</li>
+          <li><strong>Studie/opleiding-relevantie (10%):</strong> overlap tussen studierichting en sector/vacatures.</li>
+          <li><strong>Sector-potentieel YC (8%):</strong> hoe past het bedrijfstype bij het YoungCapital-portfolio.</li>
+          <li><strong>Beschikbaarheid + ervaring (5%):</strong> hoe snel inzetbaar.</li>
+          <li><strong>Bedrijfsomvang (5%):</strong> MKB (25-100 fte) is de sweet spot.</li>
+          <li><strong>Niveau-fit met sector (5%):</strong> past het opleidingsniveau bij het sector-werktype.</li>
+          <li><strong>Recente activiteit (5%):</strong> groeisignalen (uitbreiding, contracten, nieuwe vestiging).</li>
+        </ul>
+        Een match van 70-80% is al een sterk aanknopingspunt voor commerciële opvolging — 100% is zelden nodig.
+        Met <strong>AI-verfijning</strong> ingeschakeld worden notities en concrete praktijkervaring semantisch meegewogen bovenop deze basis.
+      `;
+    }
+  }
+
   function bindResultEvents() {
     document.querySelectorAll(".result-header").forEach(h => h.addEventListener("click", () => {
       const card = $(h.dataset.toggle); if (card) card.classList.toggle("expanded");
@@ -1776,6 +2025,7 @@
     const regioTxt = k.regio === "breda" ? " · regio-voorkeur Breda" : k.regio === "tilburg" ? " · regio-voorkeur Tilburg" : "";
     $("r-recap").innerHTML = `<strong>${escapeHtml(k.naam)}</strong> · ${escapeHtml(k.niveau)}-${escapeHtml(studie)} · voorkeur ${escapeHtml(sect)} · ${escapeHtml(UREN_LABEL[k.uren])}${regioTxt}`;
     $("r-list").innerHTML = matches.map((m, i) => maakBedrijfCard(m, i + 1, k, i === 0)).join("");
+    vulScoreUitleg("kandidaat");
     bindResultEvents();
     $("loading").classList.add("hidden"); $("results").classList.remove("hidden"); $("submitBtn").disabled = false;
     setTimeout(() => $("results").scrollIntoView({ behavior: "smooth", block: "start" }), 80);
@@ -1859,6 +2109,7 @@
     const studie = k.studie || `${k.niveau}-opleiding`;
     $("r-recap").innerHTML = `<strong>${escapeHtml(k.naam)}</strong> · ${escapeHtml(k.niveau)}-${escapeHtml(studie)} · voorkeur ${escapeHtml(sect)}`;
     $("r-list").innerHTML = matches.map((m, i) => maakBedrijfCard(m, i + 1, k, i === 0)).join("");
+    vulScoreUitleg("kandidaat");
     bindResultEvents();
     $("loading").classList.add("hidden"); $("results").classList.remove("hidden"); $("submitBtn").disabled = false;
     setTimeout(() => $("results").scrollIntoView({ behavior: "smooth", block: "start" }), 80);
@@ -1933,6 +2184,7 @@
     const sectLabel = (SECTOREN[b.sector] || SECTOREN.anders).label;
     $("r-recap").innerHTML = `<strong>${escapeHtml(b.naam)}</strong> · ${escapeHtml(sectLabel)} · ${escapeHtml(b.locatie)} · ${escapeHtml(OMVANG_KORT[b.omvang] || b.omvang)}${b.functie ? " · zoekt: " + escapeHtml(b.functie) + " (" + escapeHtml(b.niveau) + ")" : ""}`;
     $("r-list").innerHTML = scored.map((s, i) => maakKandidaatCard(s.kandidaat, b, s.score, i + 1, i === 0, s.aiOnderbouwing, s.aiKernreden)).join("");
+    vulScoreUitleg("bedrijf");
     bindResultEvents();
     $("loading").classList.add("hidden"); $("results").classList.remove("hidden"); $("submitBtn").disabled = false;
     setTimeout(() => $("results").scrollIntoView({ behavior: "smooth", block: "start" }), 80);
@@ -1972,6 +2224,7 @@
       const studie = k.studie || `${k.niveau}-opleiding`;
       $("r-recap").innerHTML = `<strong>${escapeHtml(k.naam)}</strong> · ${escapeHtml(k.niveau)}-${escapeHtml(studie)} · voorkeur ${escapeHtml(sect)}`;
       $("r-list").innerHTML = matches.map((m, idx) => maakLiveCard(m, idx + 1, idx === 0)).join("");
+      vulScoreUitleg("kandidaat");
       bindResultEvents();
       $("loading").classList.add("hidden"); $("results").classList.remove("hidden"); $("submitBtn").disabled = false;
       setTimeout(() => $("results").scrollIntoView({ behavior: "smooth", block: "start" }), 80);
@@ -2044,6 +2297,12 @@
     $("toggleAddCandidate").addEventListener("click", openCandidateForm);
     $("saveCandidate").addEventListener("click", saveCandidate);
     $("cancelCandidate").addEventListener("click", closeCandidateForm);
+
+    // Custom-veld toggles voor "Anders"-sector
+    bindCustomToggle("k_voorkeur", "k_voorkeur_custom");
+    bindCustomToggle("c_voorkeur", "c_voorkeur_custom");
+    bindCustomToggle("p_sector", "p_sector_custom");
+    bindCustomToggle("b_sector", "b_sector_custom");
 
     setMode("db");
   });
